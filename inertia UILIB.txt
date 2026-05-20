@@ -536,6 +536,11 @@ function Library:_AnimateContainerOpen(isInitial)
     self.container.Position = UDim2.new(0.5, 0, 0.5, 14)
     CreateTween(self._animScaleObject, { Scale = 1 }, d, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     CreateTween(self.container, { Position = UDim2.new(0.5, 0, 0.5, 0) }, d, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+    task.delay(0.02, function()
+        if self then
+            self:_UpdateResponsiveScale()
+        end
+    end)
 end
 
 function Library:_AnimateContainerClose(onDone)
@@ -874,86 +879,72 @@ function Library:_UpdateResponsiveScale()
     autoScale = math.clamp(autoScale, 0.58, 1)
 
     local manual = tonumber(self._manualScale) or 1
-    self._uiScaleObject.Scale = math.clamp(autoScale * manual, 0.5, 1)
+    local finalScale = math.clamp(autoScale * manual, 0.5, 1)
+    self._uiScaleObject.Scale = finalScale
+
+    if self.titleLabel then
+        if finalScale < 0.65 then
+            self.titleLabel.TextSize = 14
+        elseif finalScale < 0.78 then
+            self.titleLabel.TextSize = 16
+        else
+            self.titleLabel.TextSize = 18
+        end
+    end
+    if self.gameLabel then
+        if finalScale < 0.65 then
+            self.gameLabel.TextSize = 14
+        elseif finalScale < 0.78 then
+            self.gameLabel.TextSize = 16
+        else
+            self.gameLabel.TextSize = 18
+        end
+    end
+    if self._keyTimeLabel then
+        if finalScale < 0.65 then
+            self._keyTimeLabel.TextSize = 10
+        elseif finalScale < 0.78 then
+            self._keyTimeLabel.TextSize = 11
+        else
+            self._keyTimeLabel.TextSize = 12
+        end
+    end
 end
 
 function Library:_SetupMobileSupport()
     local inertiaIcon = (getgenv and getgenv().INERTIA_ICON) or "rbxassetid://107827379552049"
-    local wrap = CreateInstance("Frame", {
+    local mobileButton = CreateInstance("ImageButton", {
         Name = "MobileToggle",
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 15, 0.5, -26),
-        Size = UDim2.new(0, 52, 0, 52),
+        Image = inertiaIcon,
+        ImageColor3 = c.Text,
+        BackgroundColor3 = c.Background,
+        BackgroundTransparency = 0.1,
+        Position = UDim2.new(0, 15, 0.5, -25),
+        Size = UDim2.new(0, 50, 0, 50),
         AnchorPoint = Vector2.new(0, 0.5),
         Visible = false,
         ZIndex = 999,
         Parent = self.screenGui
     })
-
-    local wrapScale = CreateInstance("UIScale", {
-        Name = "PressScale",
-        Scale = 1,
-        Parent = wrap
-    })
-
-    CreateInstance("ImageLabel", {
-        Name = "Glow",
-        BackgroundTransparency = 1,
-        Image = inertiaIcon,
-        ImageColor3 = ACCENT,
-        ImageTransparency = 0.78,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(1, 18, 1, 18),
-        ZIndex = 999,
-        Parent = wrap
-    })
-
-    CreateInstance("ImageLabel", {
-        Name = "Shadow",
-        BackgroundTransparency = 1,
-        Image = inertiaIcon,
-        ImageColor3 = Color3.fromRGB(0, 0, 0),
-        ImageTransparency = 0.65,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 2, 0.5, 2),
-        Size = UDim2.new(1, 0, 1, 0),
-        ZIndex = 1000,
-        Parent = wrap
-    })
-
-    local mobileButton = CreateInstance("ImageButton", {
-        Name = "Icon",
-        Image = inertiaIcon,
-        BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(1, 0, 1, 0),
-        ZIndex = 1001,
-        Parent = wrap
-    })
-    mobileButton.ScaleType = Enum.ScaleType.Fit
+    CreateCorner(mobileButton, 25)
+    CreateStroke(mobileButton)
     
     local dragging = false
     local dragStart, startPos
     
-    wrap.InputBegan:Connect(function(input)
+    mobileButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
-            startPos = wrap.Position
+            startPos = mobileButton.Position
         end
     end)
     
-    wrap.InputEnded:Connect(function(input)
+    mobileButton.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             if dragging then
                 local delta = input.Position - dragStart
                 if delta.Magnitude < 10 then
-                    CreateTween(wrapScale, { Scale = 0.9 }, 0.06, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-                    task.delay(0.06, function()
-                        CreateTween(wrapScale, { Scale = 1 }, 0.12, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-                    end)
                     self:Toggle()
                 end
             end
@@ -964,7 +955,7 @@ function Library:_SetupMobileSupport()
     ui.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
             local delta = input.Position - dragStart
-            wrap.Position = UDim2.new(
+            mobileButton.Position = UDim2.new(
                 startPos.X.Scale,
                 startPos.X.Offset + delta.X,
                 startPos.Y.Scale,
@@ -973,13 +964,13 @@ function Library:_SetupMobileSupport()
         end
     end)
     
-    self._mobileToggle = wrap
+    self._mobileToggle = mobileButton
     
     if IsMobileDevice() then
         self._mobileToggleEnabled = true
-        wrap.Visible = true
+        mobileButton.Visible = true
     else
-        wrap.Visible = self._mobileToggleEnabled and true or false
+        mobileButton.Visible = self._mobileToggleEnabled and true or false
     end
 end
 
@@ -1073,7 +1064,8 @@ function Library:_CreateMainv0rtexd()
         Name = "TitleRow",
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 78, 0, 17),
-        Size = UDim2.new(1, -88, 0, 22),
+        Size = UDim2.new(1, -180, 0, 22),
+        ClipsDescendants = true,
         Parent = self.topBar
     })
     CreateInstance("UIListLayout", {
@@ -1092,9 +1084,9 @@ function Library:_CreateMainv0rtexd()
         Text = self.title,
         BackgroundTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
         TextSize = 18,
-        Size = UDim2.new(0, 0, 1, 0),
-        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.new(0.34, 0, 1, 0),
         Parent = titleRow
     })
 
@@ -1105,9 +1097,9 @@ function Library:_CreateMainv0rtexd()
         Text = "",
         BackgroundTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Left,
+        TextTruncate = Enum.TextTruncate.AtEnd,
         TextSize = 18,
-        Size = UDim2.new(0, 0, 1, 0),
-        AutomaticSize = Enum.AutomaticSize.X,
+        Size = UDim2.new(0.66, 0, 1, 0),
         Parent = titleRow
     })
 
@@ -1125,11 +1117,15 @@ function Library:_CreateMainv0rtexd()
         self.titleLabel.Text = tostring(self.title)
         if self.gameLabel then
             if gameName and gameName ~= "" then
+                self.titleLabel.Size = UDim2.new(0.34, 0, 1, 0)
+                self.gameLabel.Size = UDim2.new(0.66, 0, 1, 0)
                 self.gameLabel.Text = " - " .. tostring(gameName)
                 self.gameLabel.Visible = true
             else
                 self.gameLabel.Text = ""
                 self.gameLabel.Visible = false
+                self.titleLabel.Size = UDim2.new(1, 0, 1, 0)
+                self.gameLabel.Size = UDim2.new(0, 0, 1, 0)
             end
         end
     end)
