@@ -414,6 +414,10 @@ function Library.new(title, configFolder)
     self._minSize = Vector2.new(s.Minv0rtexd.Width, s.Minv0rtexd.Height)
     self._maxSize = Vector2.new(s.Maxv0rtexd.Width, s.Maxv0rtexd.Height)
     self._mobileToggle = nil
+    self._mobileToggleEnabled = false
+    self._uiScaleObject = nil
+    self._manualScale = 1
+    self._settingsCreated = false
     self._configElements = {}
     self._autoSave = false
     self._currentConfig = "default"
@@ -423,6 +427,7 @@ function Library.new(title, configFolder)
     self:_CreateMainv0rtexd()
     self:_SetupKeybindListener()
     self:_SetupMobileSupport()
+    self:_CreateDefaultSettings()
     CreateNotificationContainer(self.screenGui)
     self:_StartKeyTimeLoop()
     self:_StartAutoKey()
@@ -527,7 +532,11 @@ function Library:Toggle()
     end
     
     if self._mobileToggle then
-        self._mobileToggle.Visible = not self._visible
+        if IsMobileDevice() then
+            self._mobileToggle.Visible = true
+        else
+            self._mobileToggle.Visible = self._mobileToggleEnabled and true or false
+        end
     end
 end
 
@@ -590,7 +599,7 @@ function Library:_UpdateKeyTime()
         return
     end
 
-    if self.minimized or not self._visible or not self._keyExpiresAt then
+    if not self._visible or not self._keyExpiresAt then
         self._keyTimeHolder.Visible = false
         return
     end
@@ -786,22 +795,49 @@ function Library:SetToggleKey(keyCode)
     self._toggleKey = keyCode
 end
 
+function Library:SetMobileToggleEnabled(enabled)
+    if IsMobileDevice() then
+        self._mobileToggleEnabled = true
+    else
+        self._mobileToggleEnabled = enabled ~= false
+    end
+    if self._mobileToggle then
+        self._mobileToggle.Visible = IsMobileDevice() or self._mobileToggleEnabled
+    end
+end
+
+function Library:_UpdateResponsiveScale()
+    if not self._uiScaleObject or not workspace.CurrentCamera then
+        return
+    end
+
+    local viewport = workspace.CurrentCamera.ViewportSize
+    local baseW = s.v0rtexd.Width
+    local baseH = s.v0rtexd.Height
+    local margin = IsMobileDevice() and 32 or 90
+    local maxW = math.max(200, viewport.X - margin)
+    local maxH = math.max(200, viewport.Y - margin)
+    local autoScale = math.min(1, maxW / baseW, maxH / baseH)
+    autoScale = math.clamp(autoScale, 0.58, 1)
+
+    local manual = tonumber(self._manualScale) or 1
+    self._uiScaleObject.Scale = math.clamp(autoScale * manual, 0.5, 1)
+end
+
 function Library:_SetupMobileSupport()
+    local inertiaIcon = (getgenv and getgenv().INERTIA_ICON) or "rbxassetid://107827379552049"
     local mobileButton = CreateInstance("ImageButton", {
         Name = "MobileToggle",
-        Image = "rbxassetid://112235310154264",
-        ImageColor3 = c.Text,
-        BackgroundColor3 = c.Background,
-        BackgroundTransparency = 0.1,
+        Image = inertiaIcon,
+        BackgroundTransparency = 1,
         Position = UDim2.new(0, 15, 0.5, -25),
-        Size = UDim2.new(0, 50, 0, 50),
+        Size = UDim2.new(0, 52, 0, 52),
         AnchorPoint = Vector2.new(0, 0.5),
         Visible = false,
         ZIndex = 999,
         Parent = self.screenGui
     })
-    CreateCorner(mobileButton, 25)
-    CreateStroke(mobileButton)
+    mobileButton.ScaleType = Enum.ScaleType.Fit
     
     local dragging = false
     local dragStart, startPos
@@ -841,7 +877,10 @@ function Library:_SetupMobileSupport()
     self._mobileToggle = mobileButton
     
     if IsMobileDevice() then
-        mobileButton.Visible = not self._visible
+        self._mobileToggleEnabled = true
+        mobileButton.Visible = true
+    else
+        mobileButton.Visible = self._mobileToggleEnabled and true or false
     end
 end
 
@@ -862,7 +901,8 @@ function Library:_CreateMainv0rtexd()
         Name = "Container",
         BackgroundColor3 = c.Background,
         BackgroundTransparency = 0.05,
-        Position = UDim2.new(0.5, -s.v0rtexd.Width / 2, 0.5, -s.v0rtexd.Height / 2),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         BorderSizePixel = 0,
         Size = UDim2.new(0, s.v0rtexd.Width, 0, s.v0rtexd.Height),
         ClipsDescendants = false,
@@ -870,6 +910,18 @@ function Library:_CreateMainv0rtexd()
     })
     CreateCorner(self.container, 5)
     CreateStroke(self.container)
+
+    self._uiScaleObject = CreateInstance("UIScale", {
+        Name = "ResponsiveScale",
+        Scale = 1,
+        Parent = self.container
+    })
+    self:_UpdateResponsiveScale()
+    if workspace.CurrentCamera then
+        Connections["responsive_scale_viewport"] = workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+            self:_UpdateResponsiveScale()
+        end)
+    end
 
     local topLine = CreateInstance("Frame", {
         Name = "InertiaTopLine",
@@ -1306,9 +1358,6 @@ function Library:_ToggleMinimize()
         if self._acrylicBlur then
             self._acrylicBlur:SetEnabled(false)
         end
-        if self._keyTimeHolder then
-            self._keyTimeHolder.Visible = false
-        end
         CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 0, 0)}, animationspeed.Slow)
         CreateTween(self.container, {Size = UDim2.new(0, self.container.AbsoluteSize.X, 0, 56)}, animationspeed.Slow)
         if self.resizeBtn then
@@ -1326,6 +1375,154 @@ function Library:_ToggleMinimize()
             self.resizeBtn.Visible = true
         end
     end
+    self:_UpdateKeyTime()
+end
+
+function Library:_CreateDefaultSettings()
+    if self._settingsCreated then
+        return
+    end
+    self._settingsCreated = true
+
+    local inertiaIcon = (getgenv and getgenv().INERTIA_ICON) or "rbxassetid://107827379552049"
+    local section = self:CreateSection("Settings")
+    if section and section.frame then
+        section.frame.LayoutOrder = 9999
+    end
+
+    local tab = section:CreateTab("UI", inertiaIcon)
+    tab:CreateSection("General")
+    tab:CreateToggle({
+        Name = "Reduce Effects",
+        Default = self._reduceEffects,
+        Callback = function(v)
+            self:SetReduceEffects(v)
+        end,
+        Flag = "inertia_reduce_effects"
+    })
+    tab:CreateToggle({
+        Name = "Player Footer",
+        Default = self._showPlayerFooter,
+        Callback = function(v)
+            self:SetPlayerFooterVisible(v)
+        end,
+        Flag = "inertia_player_footer"
+    })
+    tab:CreateSlider({
+        Name = "UI Scale",
+        Min = 60,
+        Max = 100,
+        Default = 100,
+        Callback = function(v)
+            self._manualScale = math.clamp((tonumber(v) or 100) / 100, 0.6, 1)
+            self:_UpdateResponsiveScale()
+        end,
+        Flag = "inertia_ui_scale"
+    })
+    tab:CreateToggle({
+        Name = "Floating Button",
+        Default = IsMobileDevice() or self._mobileToggleEnabled,
+        Callback = function(v)
+            self:SetMobileToggleEnabled(v)
+        end,
+        Flag = "inertia_floating_button"
+    })
+
+    tab:CreateSection("Keybind")
+    self:_CreateToggleKeySetting(tab)
+end
+
+function Library:_CreateToggleKeySetting(tab)
+    local currentKey = self._toggleKey or Enum.KeyCode.RightControl
+    local listening = false
+
+    local frame = CreateInstance("Frame", {
+        Name = "ToggleKeybind",
+        BackgroundColor3 = c.Secondary,
+        BackgroundTransparency = 0.4,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 0, s.Button.Height),
+        Parent = tab.content
+    })
+    CreateCorner(frame, 5)
+    CreateStroke(frame)
+
+    CreateInstance("TextLabel", {
+        Name = "Name",
+        FontFace = f.Regular,
+        TextColor3 = c.Text,
+        Text = "Toggle UI",
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 10, 0.5, -10),
+        TextSize = textsize.Normal,
+        Size = UDim2.new(0, 200, 0, 20),
+        Parent = frame
+    })
+
+    local keybindBox = CreateInstance("Frame", {
+        Name = "KeybindBox",
+        BackgroundColor3 = c.Secondary,
+        BackgroundTransparency = 0.04,
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -10, 0.5, 0),
+        BorderSizePixel = 0,
+        Size = UDim2.new(0, 30, 0, 26),
+        Parent = frame
+    })
+    CreateCorner(keybindBox, 5)
+    CreateStroke(keybindBox)
+
+    local keyLabel = CreateInstance("TextLabel", {
+        Name = "KeyLabel",
+        FontFace = f.Regular,
+        TextColor3 = c.Text,
+        Text = currentKey.Name,
+        BackgroundTransparency = 1,
+        TextSize = textsize.Normal,
+        Size = UDim2.new(1, 0, 1, 0),
+        Parent = keybindBox
+    })
+
+    local button = CreateInstance("TextButton", {
+        Name = "Button",
+        Text = "",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        Parent = keybindBox
+    })
+
+    local function UpdateKeyDisplay()
+        if listening then
+            keyLabel.Text = "..."
+            keybindBox.Size = UDim2.new(0, 43, 0, 26)
+        else
+            local keyName = currentKey.Name
+            local textWidth = math.max(#keyName * 9 + 10, 24)
+            keybindBox.Size = UDim2.new(0, textWidth, 0, 26)
+            keyLabel.Text = keyName
+        end
+    end
+
+    button.MouseButton1Click:Connect(function()
+        listening = true
+        UpdateKeyDisplay()
+    end)
+
+    local inputConnection
+    inputConnection = ui.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then
+            return
+        end
+        if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+            currentKey = input.KeyCode
+            self:SetToggleKey(currentKey)
+            listening = false
+            UpdateKeyDisplay()
+        end
+    end)
+    table.insert(Connections, inputConnection)
+    UpdateKeyDisplay()
 end
 
 function Library:Destroy()
