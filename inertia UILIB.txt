@@ -845,6 +845,12 @@ function Library:_SetupMobileSupport()
 end
 
 function Library:_CreateMainv0rtexd()
+    local playerGui = plr.LocalPlayer:WaitForChild("PlayerGui")
+    local existing = playerGui:FindFirstChild(n)
+    if existing then
+        existing:Destroy()
+    end
+
     self.screenGui = CreateInstance("ScreenGui", {
         Name = n,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
@@ -898,20 +904,18 @@ function Library:_CreateMainv0rtexd()
         BackgroundTransparency = 1,
         Image = inertiaIcon,
         ImageColor3 = c.Text,
-        Position = UDim2.new(0, 10, 0, 2),
-        Size = UDim2.new(0, 52, 0, 52),
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 10, 0.5, 0),
+        Size = UDim2.new(0, 56, 0, 44),
         ScaleType = Enum.ScaleType.Fit,
         Parent = self.topBar
-    })
-    CreateInstance("UIAspectRatioConstraint", {
-        Parent = icon
     })
 
     local titleRow = CreateInstance("Frame", {
         Name = "TitleRow",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 72, 0, 17),
-        Size = UDim2.new(1, -82, 0, 22),
+        Position = UDim2.new(0, 78, 0, 17),
+        Size = UDim2.new(1, -88, 0, 22),
         Parent = self.topBar
     })
     CreateInstance("UIListLayout", {
