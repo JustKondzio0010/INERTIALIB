@@ -134,7 +134,19 @@ local function CreateListLayout(parent, padding, sortOrder, direction)
 end
 
 local function IsMobileDevice()
-    return ui.TouchEnabled and not ui.KeyboardEnabled
+    if not ui.TouchEnabled then
+        return false
+    end
+    if ui.MouseEnabled == false then
+        return true
+    end
+    if workspace.CurrentCamera then
+        local v = workspace.CurrentCamera.ViewportSize
+        if v and v.X > 0 and v.X < 900 then
+            return true
+        end
+    end
+    return false
 end
 
 local function MakeDraggable(frame, handle)
@@ -147,6 +159,9 @@ local function MakeDraggable(frame, handle)
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
+            if input.UserInputType == Enum.UserInputType.Touch then
+                dragInput = input
+            end
             local connection
             connection = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
@@ -160,25 +175,46 @@ local function MakeDraggable(frame, handle)
     end
 
     local function OnInputChanged(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
             dragInput = input
         end
     end
 
-    handle.InputBegan:Connect(OnInputBegan)
-    handle.InputChanged:Connect(OnInputChanged)
+    table.insert(Connections, handle.InputBegan:Connect(OnInputBegan))
+    table.insert(Connections, handle.InputChanged:Connect(OnInputChanged))
 
-    ui.InputChanged:Connect(function(input)
+    table.insert(Connections, ui.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            frame.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
+            local newX = startPos.X.Offset + delta.X
+            local newY = startPos.Y.Offset + delta.Y
+
+            if workspace.CurrentCamera then
+                local viewport = workspace.CurrentCamera.ViewportSize
+                local inset = gs:GetGuiInset()
+                local size = frame.AbsoluteSize
+                local anchor = frame.AnchorPoint
+                local pad = 8
+                local scalePxX = startPos.X.Scale * viewport.X
+                local scalePxY = startPos.Y.Scale * viewport.Y
+
+                local minTLX = inset.X + pad
+                local maxTLX = viewport.X - size.X - pad
+                local minTLY = inset.Y + pad
+                local maxTLY = viewport.Y - size.Y - pad
+
+                local minOffX = minTLX - scalePxX + (anchor.X * size.X)
+                local maxOffX = maxTLX - scalePxX + (anchor.X * size.X)
+                local minOffY = minTLY - scalePxY + (anchor.Y * size.Y)
+                local maxOffY = maxTLY - scalePxY + (anchor.Y * size.Y)
+
+                newX = math.clamp(newX, minOffX, maxOffX)
+                newY = math.clamp(newY, minOffY, maxOffY)
+            end
+
+            frame.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
         end
-    end)
+    end))
 end
 
 local function DisconnectAll()
@@ -388,11 +424,21 @@ end
 
 local function CreateNotificationContainer(screenGui)
     if NotificationContainer then return NotificationContainer end
+    local viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(900, 600)
+    local inset = gs:GetGuiInset()
+    local pad = IsMobileDevice() and 14 or 18
+    local top = inset.Y + pad
+    local w
+    if IsMobileDevice() then
+        w = math.clamp(math.floor(viewport.X * 0.56), 170, 260)
+    else
+        w = 220
+    end
     NotificationContainer = CreateInstance("Frame", {
         Name = "NotificationContainer",
         BackgroundTransparency = 1,
-        Position = UDim2.new(1, -240, 0, 20),
-        Size = UDim2.new(0, 220, 1, -40),
+        Position = UDim2.new(1, -(w + pad), 0, top),
+        Size = UDim2.new(0, w, 1, -(top + pad)),
         Parent = screenGui
     })
     CreateListLayout(NotificationContainer, 10, Enum.SortOrder.LayoutOrder, Enum.FillDirection.Vertical)
@@ -909,6 +955,49 @@ function Library:_UpdateResponsiveScale()
             self._keyTimeLabel.TextSize = 12
         end
     end
+
+    if self._mobileToggle and self._mobileToggle.Parent then
+        local btn = self._mobileToggle
+        local viewport2 = viewport
+        local inset2 = gs:GetGuiInset()
+        local size2 = btn.AbsoluteSize
+        local anchor2 = btn.AnchorPoint
+        local pad2 = 10
+        local pos2 = btn.Position
+        local scalePxX2 = pos2.X.Scale * viewport2.X
+        local scalePxY2 = pos2.Y.Scale * viewport2.Y
+
+        local minTLX2 = inset2.X + pad2
+        local maxTLX2 = viewport2.X - size2.X - pad2
+        local minTLY2 = inset2.Y + pad2
+        local maxTLY2 = viewport2.Y - size2.Y - pad2
+
+        local minOffX2 = minTLX2 - scalePxX2 + (anchor2.X * size2.X)
+        local maxOffX2 = maxTLX2 - scalePxX2 + (anchor2.X * size2.X)
+        local minOffY2 = minTLY2 - scalePxY2 + (anchor2.Y * size2.Y)
+        local maxOffY2 = maxTLY2 - scalePxY2 + (anchor2.Y * size2.Y)
+
+        btn.Position = UDim2.new(
+            pos2.X.Scale,
+            math.clamp(pos2.X.Offset, minOffX2, maxOffX2),
+            pos2.Y.Scale,
+            math.clamp(pos2.Y.Offset, minOffY2, maxOffY2)
+        )
+    end
+
+    if NotificationContainer and NotificationContainer.Parent then
+        local inset3 = gs:GetGuiInset()
+        local pad3 = IsMobileDevice() and 14 or 18
+        local top3 = inset3.Y + pad3
+        local w
+        if IsMobileDevice() then
+            w = math.clamp(math.floor(viewport.X * 0.56), 170, 260)
+        else
+            w = math.clamp(220, 170, 260)
+        end
+        NotificationContainer.Position = UDim2.new(1, -(w + pad3), 0, top3)
+        NotificationContainer.Size = UDim2.new(0, w, 1, -(top3 + pad3))
+    end
 end
 
 function Library:_SetupMobileSupport()
@@ -930,39 +1019,92 @@ function Library:_SetupMobileSupport()
     CreateStroke(mobileButton)
     
     local dragging = false
-    local dragStart, startPos
+    local dragStart, startPos, dragInput
+
+    local function ClampButtonPosition(pos)
+        if not workspace.CurrentCamera then
+            return pos
+        end
+        local viewport = workspace.CurrentCamera.ViewportSize
+        local inset = gs:GetGuiInset()
+        local size = mobileButton.AbsoluteSize
+        local anchor = mobileButton.AnchorPoint
+        local pad = 10
+
+        local scalePxX = pos.X.Scale * viewport.X
+        local scalePxY = pos.Y.Scale * viewport.Y
+
+        local minTLX = inset.X + pad
+        local maxTLX = viewport.X - size.X - pad
+        local minTLY = inset.Y + pad
+        local maxTLY = viewport.Y - size.Y - pad
+
+        local minOffX = minTLX - scalePxX + (anchor.X * size.X)
+        local maxOffX = maxTLX - scalePxX + (anchor.X * size.X)
+        local minOffY = minTLY - scalePxY + (anchor.Y * size.Y)
+        local maxOffY = maxTLY - scalePxY + (anchor.Y * size.Y)
+
+        local newX = math.clamp(pos.X.Offset, minOffX, maxOffX)
+        local newY = math.clamp(pos.Y.Offset, minOffY, maxOffY)
+        return UDim2.new(pos.X.Scale, newX, pos.Y.Scale, newY)
+    end
     
-    mobileButton.InputBegan:Connect(function(input)
+    table.insert(Connections, mobileButton.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             dragStart = input.Position
             startPos = mobileButton.Position
+            dragInput = input.UserInputType == Enum.UserInputType.Touch and input or nil
         end
-    end)
+    end))
     
-    mobileButton.InputEnded:Connect(function(input)
+    table.insert(Connections, mobileButton.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             if dragging then
                 local delta = input.Position - dragStart
-                if delta.Magnitude < 10 then
+                local threshold = math.max(10, math.floor(mobileButton.AbsoluteSize.X * 0.12))
+                if delta.Magnitude < threshold then
                     self:Toggle()
+                else
+                    if workspace.CurrentCamera then
+                        local viewport = workspace.CurrentCamera.ViewportSize
+                        local inset = gs:GetGuiInset()
+                        local size = mobileButton.AbsoluteSize
+                        local pad = 10
+
+                        local clamped = ClampButtonPosition(mobileButton.Position)
+                        local currentX = (clamped.X.Scale * viewport.X) + clamped.X.Offset
+                        local snapLeft = inset.X + pad
+                        local snapRight = viewport.X - size.X - pad
+                        local snapX = (currentX + (size.X * 0.5)) < (viewport.X * 0.5) and snapLeft or snapRight
+                        mobileButton.Position = ClampButtonPosition(UDim2.new(0, snapX, clamped.Y.Scale, clamped.Y.Offset))
+                    else
+                        mobileButton.Position = ClampButtonPosition(mobileButton.Position)
+                    end
                 end
             end
             dragging = false
+            dragInput = nil
         end
-    end)
+    end))
     
-    ui.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+    table.insert(Connections, mobileButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and dragging and not dragInput then
+            dragInput = input
+        end
+    end))
+
+    table.insert(Connections, ui.InputChanged:Connect(function(input)
+        if dragging and dragInput and input == dragInput and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
             local delta = input.Position - dragStart
-            mobileButton.Position = UDim2.new(
+            mobileButton.Position = ClampButtonPosition(UDim2.new(
                 startPos.X.Scale,
                 startPos.X.Offset + delta.X,
                 startPos.Y.Scale,
                 startPos.Y.Offset + delta.Y
-            )
+            ))
         end
-    end)
+    end))
     
     self._mobileToggle = mobileButton
     
@@ -972,6 +1114,8 @@ function Library:_SetupMobileSupport()
     else
         mobileButton.Visible = self._mobileToggleEnabled and true or false
     end
+
+    mobileButton.Position = ClampButtonPosition(mobileButton.Position)
 end
 
 function Library:_CreateMainv0rtexd()
@@ -1410,25 +1554,25 @@ end
 
 function Library:_SetupSmartResize(handle)
     local resizing = false
-    local resizeStart, startSize, startPos
+    local resizeStart, startSize, resizeInput
 
-    handle.MouseEnter:Connect(function()
+    table.insert(Connections, handle.MouseEnter:Connect(function()
         CreateTween(handle, {ImageColor3 = c.Text}, animationspeed.Fast)
-    end)
+    end))
 
-    handle.MouseLeave:Connect(function()
+    table.insert(Connections, handle.MouseLeave:Connect(function()
         if not resizing then
             CreateTween(handle, {ImageColor3 = Color3.fromRGB(110, 110, 110)}, animationspeed.Fast)
         end
-    end)
+    end))
 
-    handle.InputBegan:Connect(function(input)
+    table.insert(Connections, handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             resizeStart = input.Position
-            startSize = self.container.AbsoluteSize
-            startPos = self.container.AbsolutePosition
+            startSize = Vector2.new(self.container.Size.X.Offset, self.container.Size.Y.Offset)
             self._originalHeight = startSize.Y
+            resizeInput = input.UserInputType == Enum.UserInputType.Touch and input or nil
 
             local connection
             connection = input.Changed:Connect(function()
@@ -1438,20 +1582,36 @@ function Library:_SetupSmartResize(handle)
                     if connection then
                         connection:Disconnect()
                     end
+                    resizeInput = nil
                 end
             end)
         end
-    end)
+    end))
 
-    ui.InputChanged:Connect(function(input)
-        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+    table.insert(Connections, handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement and resizing and not resizeInput then
+            resizeInput = input
+        end
+    end))
+
+    table.insert(Connections, ui.InputChanged:Connect(function(input)
+        if resizing and resizeInput and input == resizeInput and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            local newWidth = math.clamp(startSize.X + delta.X, self._minSize.X, self._maxSize.X)
-            local newHeight = math.clamp(startSize.Y + delta.Y, self._minSize.Y, self._maxSize.Y)
+            local scale = 1
+            if self._uiScaleObject then
+                scale = scale * self._uiScaleObject.Scale
+            end
+            if self._animScaleObject then
+                scale = scale * self._animScaleObject.Scale
+            end
+            scale = math.max(0.01, scale)
+
+            local newWidth = math.clamp(startSize.X + (delta.X / scale), self._minSize.X, self._maxSize.X)
+            local newHeight = math.clamp(startSize.Y + (delta.Y / scale), self._minSize.Y, self._maxSize.Y)
             self.container.Size = UDim2.new(0, newWidth, 0, newHeight)
             self._originalHeight = newHeight
         end
-    end)
+    end))
 end
 
 function Library:_ToggleMinimize()
@@ -1461,7 +1621,7 @@ function Library:_ToggleMinimize()
             self._acrylicBlur:SetEnabled(false)
         end
         CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 0, 0)}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
-        CreateTween(self.container, {Size = UDim2.new(0, self.container.AbsoluteSize.X, 0, 56)}, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+        CreateTween(self.container, {Size = UDim2.new(0, self.container.Size.X.Offset, 0, 56)}, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.In)
         if self.resizeBtn then
             self.resizeBtn.Visible = false
         end
@@ -1469,7 +1629,7 @@ function Library:_ToggleMinimize()
         if self._acrylicBlur then
             self._acrylicBlur:SetEnabled((not self._reduceEffects) and self._visible)
         end
-        CreateTween(self.container, {Size = UDim2.new(0, self.container.AbsoluteSize.X, 0, self._originalHeight)}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        CreateTween(self.container, {Size = UDim2.new(0, self.container.Size.X.Offset, 0, self._originalHeight)}, 0.24, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         task.delay(0.06, function()
             CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 1, -57)}, 0.16, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
         end)
