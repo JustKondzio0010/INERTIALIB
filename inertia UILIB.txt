@@ -702,7 +702,8 @@ function Library:_VerifyKey(key)
         key = tostring(key or ""),
         hwid = self:_GenerateHWID(),
         ip = "roblox_client",
-        fingerprint = self:_GenerateFingerprint()
+        fingerprint = self:_GenerateFingerprint(),
+        roblox_user_id = plr.LocalPlayer and plr.LocalPlayer.UserId or nil
     })
 
     local ok, res = pcall(function()
