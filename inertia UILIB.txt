@@ -652,8 +652,8 @@ function Library:_CreateMainv0rtexd()
         BackgroundTransparency = 1,
         Image = inertiaIcon,
         ImageColor3 = c.Text,
-        Position = UDim2.new(0, 10, 0, 5),
-        Size = UDim2.new(0, 46, 0, 46),
+        Position = UDim2.new(0, 10, 0, 4),
+        Size = UDim2.new(0, 48, 0, 48),
         Parent = self.topBar
     })
     CreateInstance("UIAspectRatioConstraint", {
@@ -666,40 +666,30 @@ function Library:_CreateMainv0rtexd()
         TextColor3 = c.Text,
         Text = self.title,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 62, 0, 8),
+        Position = UDim2.new(0, 66, 0, 17),
         TextXAlignment = Enum.TextXAlignment.Left,
         TextSize = 18,
-        Size = UDim2.new(0, 260, 0, 22),
-        Parent = self.topBar
-    })
-
-    local subtitle = CreateInstance("TextLabel", {
-        Name = "Subtitle",
-        FontFace = f.Regular,
-        TextColor3 = c.TextDark,
-        Text = "Loader",
-        BackgroundTransparency = 1,
-        Position = UDim2.new(0, 62, 0, 30),
-        TextXAlignment = Enum.TextXAlignment.Left,
-        TextSize = 12,
-        Size = UDim2.new(0, 320, 0, 16),
+        Size = UDim2.new(1, -76, 0, 22),
         Parent = self.topBar
     })
 
     task.spawn(function()
-        local txt = (getgenv and getgenv().INERTIA_SUBTITLE)
-        if not txt or txt == "" then
+        local gameName = (getgenv and getgenv().INERTIA_GAME_NAME)
+        if not gameName or gameName == "" then
             local MarketplaceService = game:GetService("MarketplaceService")
             local ok, info = pcall(function()
                 return MarketplaceService:GetProductInfo(game.PlaceId)
             end)
             if ok and info and info.Name then
-                txt = tostring(info.Name)
-            else
-                txt = "Loader"
+                gameName = tostring(info.Name)
             end
         end
-        subtitle.Text = tostring(txt)
+
+        if gameName and gameName ~= "" then
+            self.titleLabel.Text = tostring(self.title) .. " - " .. tostring(gameName)
+        else
+            self.titleLabel.Text = tostring(self.title)
+        end
     end)
 
     local titleGradient = CreateInstance("UIGradient", {
@@ -827,7 +817,7 @@ function Library:_CreateContentArea()
         ScrollBarThickness = 0,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(0, 165, 1, 0),
+        Size = UDim2.new(0, 165, 1, -58),
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -835,6 +825,83 @@ function Library:_CreateContentArea()
     })
     CreateListLayout(self.sectionsContainer, 0, Enum.SortOrder.LayoutOrder)
     CreatePadding(self.sectionsContainer, 5, 5, 5, 5)
+
+    local footer = CreateInstance("Frame", {
+        Name = "PlayerFooter",
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0, 1),
+        Position = UDim2.new(0, 0, 1, 0),
+        Size = UDim2.new(0, 165, 0, 58),
+        Parent = self.mainContent
+    })
+
+    CreateInstance("Frame", {
+        Name = "TopLine",
+        BackgroundColor3 = c.Border,
+        BackgroundTransparency = 0.7,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 8, 0, 0),
+        Size = UDim2.new(1, -16, 0, 1),
+        Parent = footer
+    })
+
+    local avatar = CreateInstance("ImageLabel", {
+        Name = "Avatar",
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 10),
+        Size = UDim2.new(0, 30, 0, 30),
+        Image = "",
+        Parent = footer
+    })
+    CreateCorner(avatar, 100)
+
+    local playerName = CreateInstance("TextLabel", {
+        Name = "PlayerName",
+        FontFace = f.Regular,
+        TextColor3 = c.TextDark,
+        Text = "",
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0.5, 0),
+        Position = UDim2.new(0.5, 0, 0, 40),
+        Size = UDim2.new(1, -16, 0, 16),
+        TextSize = textsize.Tiny,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        Parent = footer
+    })
+    playerName.TextTruncate = Enum.TextTruncate.AtEnd
+
+    task.spawn(function()
+        local player = plr.LocalPlayer
+        if not player then
+            return
+        end
+
+        local function updateName()
+            local dn = player.DisplayName
+            if dn and dn ~= "" then
+                playerName.Text = tostring(dn)
+                return
+            end
+            playerName.Text = tostring(player.Name or "Player")
+        end
+
+        local function updateAvatar()
+            local ok, content = pcall(function()
+                local ctn = plr:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
+                return ctn
+            end)
+            if ok and content and content ~= "" then
+                avatar.Image = content
+            end
+        end
+
+        updateName()
+        updateAvatar()
+
+        player:GetPropertyChangedSignal("DisplayName"):Connect(updateName)
+        player:GetPropertyChangedSignal("Name"):Connect(updateName)
+    end)
 
     CreateInstance("Frame", {
         Name = "Separator",
