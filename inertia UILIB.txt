@@ -111,6 +111,143 @@ function Flux:Window(text, bottom,mainclr,toclose)
 			end)
 		end
 	end
+
+	local flags = {}
+	local flagBindings = {}
+
+	local function registerFlag(flag, setter)
+		if type(flag) == "string" and flag ~= "" and type(setter) == "function" then
+			flagBindings[flag] = setter
+		end
+	end
+
+	local function setFlagValue(flag, value, apply)
+		if type(flag) == "string" and flag ~= "" then
+			flags[flag] = value
+			if apply and flagBindings[flag] then
+				pcall(flagBindings[flag], value)
+			end
+		end
+	end
+
+	local function snapshotFlags()
+		local out = {}
+		for k, v in next, flags do
+			out[k] = v
+		end
+		return out
+	end
+
+	local function sanitizeConfigName(name)
+		name = tostring(name or ""):gsub("[^%w%-%_ ]", ""):gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")
+		if name == "" then
+			name = "default"
+		end
+		return name
+	end
+
+	local function makeFlagKey(prefix, name)
+		local p = tostring(prefix or "tab")
+		local n = tostring(name or "flag")
+		local k = (p .. "." .. n):gsub("%s+", "_"):gsub("[^%w%._%-]", "")
+		if k == "" then
+			k = "flag"
+		end
+		return k
+	end
+
+	local configFolder = "inertia_configs"
+	local function ensureConfigFolder()
+		if typeof(isfolder) == "function" and typeof(makefolder) == "function" then
+			if not isfolder(configFolder) then
+				pcall(function()
+					makefolder(configFolder)
+				end)
+			end
+		end
+	end
+
+	local function listConfigs()
+		ensureConfigFolder()
+		if typeof(listfiles) ~= "function" then
+			return {}
+		end
+		local files = {}
+		local ok, res = pcall(function()
+			return listfiles(configFolder)
+		end)
+		if not ok or type(res) ~= "table" then
+			return {}
+		end
+		for _, p in ipairs(res) do
+			local n = tostring(p):match("([^\\/]+)%.json$")
+			if n and n ~= "" then
+				table.insert(files, n)
+			end
+		end
+		table.sort(files)
+		return files
+	end
+
+	local function configPath(name)
+		return configFolder .. "/" .. sanitizeConfigName(name) .. ".json"
+	end
+
+	local function saveConfig(name)
+		ensureConfigFolder()
+		if typeof(writefile) ~= "function" then
+			return false, "no_writefile"
+		end
+		local payload = {flags = snapshotFlags()}
+		local ok, body = pcall(function()
+			return HttpService:JSONEncode(payload)
+		end)
+		if not ok then
+			return false, "encode_failed"
+		end
+		local ok2 = pcall(function()
+			writefile(configPath(name), body)
+		end)
+		if not ok2 then
+			return false, "write_failed"
+		end
+		return true
+	end
+
+	local function loadConfig(name)
+		ensureConfigFolder()
+		if typeof(readfile) ~= "function" or typeof(isfile) ~= "function" then
+			return false, "no_readfile"
+		end
+		local path = configPath(name)
+		if not isfile(path) then
+			return false, "not_found"
+		end
+		local ok, decoded = pcall(function()
+			return HttpService:JSONDecode(readfile(path))
+		end)
+		if not ok or type(decoded) ~= "table" or type(decoded.flags) ~= "table" then
+			return false, "decode_failed"
+		end
+		for k, v in next, decoded.flags do
+			setFlagValue(k, v, true)
+		end
+		return true
+	end
+
+	local function deleteConfig(name)
+		ensureConfigFolder()
+		if typeof(delfile) ~= "function" then
+			return false, "no_delfile"
+		end
+		local ok = pcall(function()
+			delfile(configPath(name))
+		end)
+		if not ok then
+			return false, "delete_failed"
+		end
+		return true
+	end
 	local MainFrame = Instance.new("Frame")
 	local MainCorner = Instance.new("UICorner")
 	local LeftFrame = Instance.new("Frame")
@@ -255,7 +392,80 @@ function Flux:Window(text, bottom,mainclr,toclose)
 		end
 	)
 
+	local KeyBadge = Instance.new("Frame")
+	local KeyBadgeCorner = Instance.new("UICorner")
+	local KeyBadgeStroke = Instance.new("UIStroke")
+	local KeyBadgeText = Instance.new("TextLabel")
+	local keyExpiresAt = nil
+
+	KeyBadge.Name = "KeyBadge"
+	KeyBadge.Parent = MainFrame
+	KeyBadge.AnchorPoint = Vector2.new(1, 0)
+	KeyBadge.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
+	KeyBadge.BackgroundTransparency = 0.05
+	KeyBadge.BorderSizePixel = 0
+	KeyBadge.Position = UDim2.new(1, -12, 0, 10)
+	KeyBadge.Size = UDim2.new(0, 170, 0, 26)
+	KeyBadge.ZIndex = 50
+
+	KeyBadgeCorner.CornerRadius = UDim.new(0, 6)
+	KeyBadgeCorner.Parent = KeyBadge
+
+	KeyBadgeStroke.Color = PresetColor
+	KeyBadgeStroke.Thickness = 1.2
+	KeyBadgeStroke.Transparency = 0.35
+	KeyBadgeStroke.Parent = KeyBadge
+
+	KeyBadgeText.Name = "KeyBadgeText"
+	KeyBadgeText.Parent = KeyBadge
+	KeyBadgeText.BackgroundTransparency = 1
+	KeyBadgeText.Position = UDim2.new(0, 10, 0, 0)
+	KeyBadgeText.Size = UDim2.new(1, -20, 1, 0)
+	KeyBadgeText.Font = Enum.Font.Gotham
+	KeyBadgeText.Text = "NO KEY"
+	KeyBadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
+	KeyBadgeText.TextSize = 12
+	KeyBadgeText.TextTransparency = 0.15
+	KeyBadgeText.TextXAlignment = Enum.TextXAlignment.Left
+
+	local function formatKeyTimeLeft(seconds)
+		seconds = math.max(0, math.floor(tonumber(seconds) or 0))
+		local hours = math.floor(seconds / 3600)
+		local minutes = math.floor((seconds % 3600) / 60)
+		if hours <= 0 and minutes <= 0 then
+			return "0m"
+		end
+		if hours <= 0 then
+			return tostring(minutes) .. "m"
+		end
+		return tostring(hours) .. "h " .. tostring(minutes) .. "m"
+	end
+
+	local function updateKeyBadge()
+		if not keyExpiresAt then
+			KeyBadgeText.Text = "NO KEY"
+			KeyBadgeStroke.Color = PresetColor
+			return
+		end
+		local left = keyExpiresAt - os.time()
+		if left <= 0 then
+			KeyBadgeText.Text = "EXPIRED"
+			KeyBadgeStroke.Color = Color3.fromRGB(255, 85, 85)
+			return
+		end
+		KeyBadgeText.Text = "KEY: " .. formatKeyTimeLeft(left)
+		KeyBadgeStroke.Color = PresetColor
+	end
+
+	task.spawn(function()
+		while FluxLib and FluxLib.Parent do
+			updateKeyBadge()
+			task.wait(30)
+		end
+	end)
+
 	local MobileToggle = Instance.new("ImageButton")
+	local MobileToggleGlow = Instance.new("ImageLabel")
 	local MobileToggleCorner = Instance.new("UICorner")
 	local MobileToggleStroke = Instance.new("UIStroke")
 
@@ -265,7 +475,7 @@ function Flux:Window(text, bottom,mainclr,toclose)
 	MobileToggle.BackgroundColor3 = Color3.fromRGB(20, 22, 26)
 	MobileToggle.BorderSizePixel = 0
 	MobileToggle.Position = UDim2.new(0, 14, 1, -14)
-	MobileToggle.Size = UDim2.new(0, 46, 0, 46)
+	MobileToggle.Size = UDim2.new(0, 56, 0, 56)
 	MobileToggle.AutoButtonColor = false
 	MobileToggle.Image = inertiaIcon
 	MobileToggle.ImageTransparency = 0
@@ -273,12 +483,25 @@ function Flux:Window(text, bottom,mainclr,toclose)
 	MobileToggle.Visible = UserInputService.TouchEnabled
 	MobileToggle.ZIndex = 1000
 
+	MobileToggleGlow.Name = "MobileToggleGlow"
+	MobileToggleGlow.Parent = MobileToggle
+	MobileToggleGlow.BackgroundTransparency = 1
+	MobileToggleGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+	MobileToggleGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
+	MobileToggleGlow.Size = UDim2.new(1, 22, 1, 22)
+	MobileToggleGlow.Image = "rbxassetid://4996891970"
+	MobileToggleGlow.ImageColor3 = PresetColor
+	MobileToggleGlow.ImageTransparency = 0.75
+	MobileToggleGlow.ScaleType = Enum.ScaleType.Slice
+	MobileToggleGlow.SliceCenter = Rect.new(20, 20, 280, 280)
+	MobileToggleGlow.ZIndex = 999
+
 	MobileToggleCorner.CornerRadius = UDim.new(1, 0)
 	MobileToggleCorner.Parent = MobileToggle
 
 	MobileToggleStroke.Color = PresetColor
-	MobileToggleStroke.Thickness = 1.5
-	MobileToggleStroke.Transparency = 0.25
+	MobileToggleStroke.Thickness = 2.2
+	MobileToggleStroke.Transparency = 0.18
 	MobileToggleStroke.Parent = MobileToggle
 
 	MakeDraggable(MobileToggle, MobileToggle)
@@ -477,7 +700,38 @@ function Flux:Window(text, bottom,mainclr,toclose)
 		):Play()
 	end
 	local Tabs = {}
+	Tabs.Flags = flags
+	function Tabs:SetKeyTimeLeft(seconds)
+		keyExpiresAt = os.time() + math.max(0, math.floor(tonumber(seconds) or 0))
+		updateKeyBadge()
+	end
+	function Tabs:SetKeyExpiresAt(expiresAtUnix)
+		local v = tonumber(expiresAtUnix)
+		if not v then
+			keyExpiresAt = nil
+		else
+			keyExpiresAt = math.floor(v)
+		end
+		updateKeyBadge()
+	end
+	function Tabs:ClearKey()
+		keyExpiresAt = nil
+		updateKeyBadge()
+	end
+	function Tabs:SaveConfig(name)
+		return saveConfig(name)
+	end
+	function Tabs:LoadConfig(name)
+		return loadConfig(name)
+	end
+	function Tabs:DeleteConfig(name)
+		return deleteConfig(name)
+	end
+	function Tabs:ListConfigs()
+		return listConfigs()
+	end
 	function Tabs:Tab(text,ico)
+		local tabPrefix = tostring(text or "Tab")
 		local Tab = Instance.new("TextButton")
 		local TabIcon = Instance.new("ImageLabel")
 		local TabTitle = Instance.new("TextLabel")
@@ -824,6 +1078,14 @@ function Flux:Window(text, bottom,mainclr,toclose)
 		function ContainerContent:Toggle(text, desc,default, callback)
 			local ToggleDescToggled = false
 			local Toggled = false
+			local flag = nil
+			if typeof(desc) == "table" then
+				flag = desc.flag
+				desc = desc.desc or ""
+			end
+			if not flag then
+				flag = makeFlagKey(tabPrefix, text)
+			end
 			if desc == "" then
 				desc = "There is no description for this toggle."
 			end
@@ -983,8 +1245,34 @@ function Flux:Window(text, bottom,mainclr,toclose)
 					):Play()
 				end
 				Toggled = not Toggled
+				setFlagValue(flag, Toggled, false)
 				pcall(callback, Toggled)
 			end)
+
+			if flag then
+				setFlagValue(flag, default == true, false)
+				registerFlag(flag, function(v)
+					local state = v == true
+					if state == Toggled then return end
+					if state then
+						ToggleCircle.Position = UDim2.new(0.37, 0,-0.273, 0)
+						ToggleCircle.BackgroundColor3 = PresetColor
+					else
+						ToggleCircle.Position = UDim2.new(0, 0,-0.273, 0)
+						ToggleCircle.BackgroundColor3 = Color3.fromRGB(255,255,255)
+					end
+					Toggled = state
+					setFlagValue(flag, state, false)
+					pcall(callback, state)
+				end)
+			end
+
+			if default == true and Toggled == false then
+				ToggleCircle.Position = UDim2.new(0.37, 0,-0.273, 0)
+				ToggleCircle.BackgroundColor3 = PresetColor
+				Toggled = true
+				setFlagValue(flag, true, false)
+			end
 			
 			ArrowBtn.MouseButton1Click:Connect(function()
 				if ToggleDescToggled == false then
@@ -1095,6 +1383,14 @@ function Flux:Window(text, bottom,mainclr,toclose)
 			local SliderFunc = {}
 			local SliderDescToggled = false
                         local dragging = false
+			local flag = nil
+			if typeof(desc) == "table" then
+				flag = desc.flag
+				desc = desc.desc or ""
+			end
+			if not flag then
+				flag = makeFlagKey(tabPrefix, text)
+			end
 			if desc == "" then
 				desc = "There is no description for this slider."
 			end
@@ -1359,6 +1655,7 @@ function Flux:Window(text, bottom,mainclr,toclose)
 					SlideCircle:TweenPosition(pos, "Out", "Sine", 0.1, true)
 					local value = math.floor(((pos.X.Scale * max) / max) * (max - min) + min)
 					Value.Text = tostring(value)
+					setFlagValue(flag, value, false)
 					pcall(callback, value)
 				end
 				SlideCircle.InputBegan:Connect(
@@ -1385,12 +1682,27 @@ function Flux:Window(text, bottom,mainclr,toclose)
 				CurrentValueFrame.Size = UDim2.new((tochange or 0) / max, 0, 0, 3)
 				SlideCircle.Position = UDim2.new((tochange or 0)/max, -6,-1.30499995, 0)
 				Value.Text = tostring(tochange and math.floor((tochange / max) * (max - min) + min) or 0)
+				setFlagValue(flag, tochange, false)
 				pcall(callback,tochange)
+			end
+			if flag then
+				setFlagValue(flag, start or 0, false)
+				registerFlag(flag, function(v)
+					SliderFunc:Change(tonumber(v) or 0)
+				end)
 			end
 			return SliderFunc
 		end
 		function ContainerContent:Dropdown(text,list,callback)
 			local DropFunc = {}
+			local flag = nil
+			if typeof(text) == "table" then
+				flag = text.flag
+				text = text.text or text.name or ""
+			end
+			if not flag then
+				flag = makeFlagKey(tabPrefix, text)
+			end
 			local Selected = text
 			local FrameSize = 43
 			local ItemCount = 0
@@ -1640,6 +1952,7 @@ function Flux:Window(text, bottom,mainclr,toclose)
 					pcall(callback, v)
 					Title.Text = text
 					Selected = v
+					setFlagValue(flag, v, false)
 					DropToggled = not DropToggled
 					Dropdown:TweenSize(UDim2.new(0, 457, 0, 43), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 					TweenService:Create(
@@ -1732,6 +2045,7 @@ function Flux:Window(text, bottom,mainclr,toclose)
 					pcall(callback, addtext)
 					Title.Text = text
 					Selected = addtext
+					setFlagValue(flag, addtext, false)
 					DropToggled = not DropToggled
 					Dropdown:TweenSize(UDim2.new(0, 457, 0, 43), Enum.EasingDirection.Out, Enum.EasingStyle.Quart, .6, true)
 					TweenService:Create(
@@ -1864,6 +2178,18 @@ function Flux:Window(text, bottom,mainclr,toclose)
 					wait(.4)
 					Container.CanvasSize = UDim2.new(0, 0, 0, ContainerLayout.AbsoluteContentSize.Y)
 				end
+			end
+			function DropFunc:Set(value)
+				Selected = tostring(value)
+				Title.Text = Selected
+				setFlagValue(flag, Selected, false)
+				pcall(callback, Selected)
+			end
+			if flag then
+				setFlagValue(flag, Selected, false)
+				registerFlag(flag, function(v)
+					DropFunc:Set(v)
+				end)
 			end
 			return DropFunc
 		end
@@ -2852,6 +3178,59 @@ function Flux:Window(text, bottom,mainclr,toclose)
 	end)
 	Settings:Button("Toggle UI", "Show/Hide the UI.", function()
 		setUIVisible(uiHidden)
+	end)
+
+	local selectedConfig = nil
+	local configName = "default"
+
+	local function refreshConfigDropdown(drop)
+		if not drop then return end
+		drop:Clear()
+		for _, n in ipairs(listConfigs()) do
+			drop:Add(n)
+		end
+	end
+
+	local ConfigDropdown = Settings:Dropdown("Select Config", listConfigs(), function(v)
+		selectedConfig = v
+	end)
+	Settings:Textbox("Config Name", "Type a name, then press Enter.", false, function(v)
+		configName = sanitizeConfigName(v)
+	end)
+	Settings:Button("Save Config", "Saves toggles/sliders/dropdowns into a file.", function()
+		local ok, err = saveConfig(configName)
+		if not ok then
+			Flux:Notification("Config save failed: " .. tostring(err), "OK")
+			return
+		end
+		selectedConfig = configName
+		refreshConfigDropdown(ConfigDropdown)
+		Flux:Notification("Saved config: " .. tostring(configName), "OK")
+	end)
+	Settings:Button("Load Config", "Loads settings from the selected config.", function()
+		local name = selectedConfig or configName
+		local ok, err = loadConfig(name)
+		if not ok then
+			Flux:Notification("Config load failed: " .. tostring(err), "OK")
+			return
+		end
+		Flux:Notification("Loaded config: " .. tostring(name), "OK")
+	end)
+	Settings:Button("Delete Config", "Deletes the selected config file.", function()
+		local name = selectedConfig or configName
+		local ok, err = deleteConfig(name)
+		if not ok then
+			Flux:Notification("Config delete failed: " .. tostring(err), "OK")
+			return
+		end
+		if selectedConfig == name then
+			selectedConfig = nil
+		end
+		refreshConfigDropdown(ConfigDropdown)
+		Flux:Notification("Deleted config: " .. tostring(name), "OK")
+	end)
+	Settings:Button("Refresh Configs", "Reloads the config list.", function()
+		refreshConfigDropdown(ConfigDropdown)
 	end)
 	return Tabs
 end
