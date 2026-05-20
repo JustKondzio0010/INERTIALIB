@@ -898,12 +898,29 @@ function Library:_CreateMainv0rtexd()
         BackgroundTransparency = 1,
         Image = inertiaIcon,
         ImageColor3 = c.Text,
-        Position = UDim2.new(0, 10, 0, 4),
-        Size = UDim2.new(0, 48, 0, 48),
+        Position = UDim2.new(0, 10, 0, 2),
+        Size = UDim2.new(0, 52, 0, 52),
+        ScaleType = Enum.ScaleType.Fit,
         Parent = self.topBar
     })
     CreateInstance("UIAspectRatioConstraint", {
         Parent = icon
+    })
+
+    local titleRow = CreateInstance("Frame", {
+        Name = "TitleRow",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 72, 0, 17),
+        Size = UDim2.new(1, -82, 0, 22),
+        Parent = self.topBar
+    })
+    CreateInstance("UIListLayout", {
+        FillDirection = Enum.FillDirection.Horizontal,
+        HorizontalAlignment = Enum.HorizontalAlignment.Left,
+        VerticalAlignment = Enum.VerticalAlignment.Center,
+        SortOrder = Enum.SortOrder.LayoutOrder,
+        Padding = UDim.new(0, 0),
+        Parent = titleRow
     })
 
     self.titleLabel = CreateInstance("TextLabel", {
@@ -912,11 +929,24 @@ function Library:_CreateMainv0rtexd()
         TextColor3 = c.Text,
         Text = self.title,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 66, 0, 17),
         TextXAlignment = Enum.TextXAlignment.Left,
         TextSize = 18,
-        Size = UDim2.new(1, -76, 0, 22),
-        Parent = self.topBar
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        Parent = titleRow
+    })
+
+    self.gameLabel = CreateInstance("TextLabel", {
+        Name = "GameName",
+        FontFace = f.Regular,
+        TextColor3 = c.TextDark,
+        Text = "",
+        BackgroundTransparency = 1,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 18,
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        Parent = titleRow
     })
 
     task.spawn(function()
@@ -930,10 +960,15 @@ function Library:_CreateMainv0rtexd()
                 gameName = tostring(info.Name)
             end
         end
-        if gameName and gameName ~= "" then
-            self.titleLabel.Text = tostring(self.title) .. " - " .. tostring(gameName)
-        else
-            self.titleLabel.Text = tostring(self.title)
+        self.titleLabel.Text = tostring(self.title)
+        if self.gameLabel then
+            if gameName and gameName ~= "" then
+                self.gameLabel.Text = " - " .. tostring(gameName)
+                self.gameLabel.Visible = true
+            else
+                self.gameLabel.Text = ""
+                self.gameLabel.Visible = false
+            end
         end
     end)
 
