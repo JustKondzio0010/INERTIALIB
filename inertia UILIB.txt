@@ -2698,6 +2698,24 @@ function Library._CreateDropdown(tab, config)
     })
     CreateCorner(optionsContainer, 5)
     CreateStroke(optionsContainer)
+    
+    -- Reparent to ScreenGui so dropdown is not clipped by tab
+    task.spawn(function()
+        local screenGui = frame:FindFirstAncestorOfClass("ScreenGui")
+        if screenGui then
+            optionsContainer.Parent = screenGui
+            -- Update position to be absolute
+            local function updatePosition()
+                if frame and frame.Parent then
+                    local absPos = frame.AbsolutePosition
+                    local absSize = frame.AbsoluteSize
+                    optionsContainer.Position = UDim2.new(0, absPos.X + absSize.X - 145, 0, absPos.Y + 38)
+                end
+            end
+            updatePosition()
+            frame:GetPropertyChangedSignal("AbsolutePosition"):Connect(updatePosition)
+        end
+    end)
 
     local optionsScroll = CreateInstance("ScrollingFrame", {
         Name = "OptionsScroll",
@@ -2785,6 +2803,32 @@ function Library._CreateDropdown(tab, config)
         optionsContainer.Visible = expanded
         CreateTween(arrow, {Rotation = expanded and 180 or 0}, animationspeed.Normal)
         frame.ZIndex = expanded and 10 or 1
+        optionsContainer.ZIndex = expanded and 200 or 100
+    end)
+    
+    -- Close dropdown when clicking outside
+    local UserInputService = game:GetService("UserInputService")
+    UserInputService.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and expanded then
+            local mousePos = UserInputService:GetMouseLocation()
+            local containerPos = optionsContainer.AbsolutePosition
+            local containerSize = optionsContainer.AbsoluteSize
+            local displayPos = selectedDisplay.AbsolutePosition
+            local displaySize = selectedDisplay.AbsoluteSize
+            
+            local inContainer = mousePos.X >= containerPos.X and mousePos.X <= containerPos.X + containerSize.X
+                and mousePos.Y >= containerPos.Y and mousePos.Y <= containerPos.Y + containerSize.Y
+            local inDisplay = mousePos.X >= displayPos.X and mousePos.X <= displayPos.X + displaySize.X
+                and mousePos.Y >= displayPos.Y and mousePos.Y <= displayPos.Y + displaySize.Y
+            
+            if not inContainer and not inDisplay then
+                expanded = false
+                optionsContainer.Visible = false
+                CreateTween(arrow, {Rotation = 0}, animationspeed.Normal)
+                frame.ZIndex = 1
+                optionsContainer.ZIndex = 100
+            end
+        end
     end)
 
     local methods = {
@@ -3457,3 +3501,4 @@ function Library._CreateConfigSection(tab)
 end
 
 return Library
+
