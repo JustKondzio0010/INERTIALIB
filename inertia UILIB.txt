@@ -2607,6 +2607,11 @@ function Library._CreateDropdown(tab, config)
     local flag = config.Flag
     local selected = multiSelect and {} or default
     local expanded = false
+    
+    -- Global dropdown tracking
+    if not Library._activeDropdowns then
+        Library._activeDropdowns = {}
+    end
 
     if multiSelect and type(default) == "table" then
         selected = default
@@ -2799,6 +2804,21 @@ function Library._CreateDropdown(tab, config)
     })
 
     toggleBtn.MouseButton1Click:Connect(function()
+        -- Close all other dropdowns first
+        for _, dropdown in ipairs(Library._activeDropdowns) do
+            if dropdown ~= optionsContainer and dropdown.Visible then
+                dropdown.Visible = false
+                -- Find and reset arrow rotation for that dropdown
+                local parentFrame = dropdown.Parent
+                if parentFrame then
+                    local arrow = parentFrame:FindFirstChild("Arrow", true)
+                    if arrow then
+                        CreateTween(arrow, {Rotation = 0}, animationspeed.Normal)
+                    end
+                end
+            end
+        end
+        
         expanded = not expanded
         optionsContainer.Visible = expanded
         CreateTween(arrow, {Rotation = expanded and 180 or 0}, animationspeed.Normal)
@@ -2806,10 +2826,17 @@ function Library._CreateDropdown(tab, config)
         optionsContainer.ZIndex = expanded and 200 or 100
     end)
     
-    -- Close dropdown when clicking outside
+    -- Register this dropdown
+    table.insert(Library._activeDropdowns, optionsContainer)
+    
+    -- Close dropdown when clicking outside (with delay to allow option clicks)
     local UserInputService = game:GetService("UserInputService")
-    UserInputService.InputBegan:Connect(function(input)
+    local clickConnection
+    clickConnection = UserInputService.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 and expanded then
+            task.wait(0.05) -- Small delay to allow option button clicks to process first
+            if not expanded then return end -- Check if already closed by option click
+            
             local mousePos = UserInputService:GetMouseLocation()
             local containerPos = optionsContainer.AbsolutePosition
             local containerSize = optionsContainer.AbsoluteSize
@@ -2828,6 +2855,17 @@ function Library._CreateDropdown(tab, config)
                 frame.ZIndex = 1
                 optionsContainer.ZIndex = 100
             end
+        end
+    end)
+    
+    -- Cleanup on destroy
+    frame.Destroying:Connect(function()
+        if clickConnection then
+            clickConnection:Disconnect()
+        end
+        local index = table.find(Library._activeDropdowns, optionsContainer)
+        if index then
+            table.remove(Library._activeDropdowns, index)
         end
     end)
 
