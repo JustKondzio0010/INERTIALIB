@@ -9,103 +9,33 @@ local stats = game:GetService("Stats")
 
 local LibraryName = "Inertia"
 
-local THEMES = {
-    ["Inertia Matte"] = {
-        Accent = Color3.fromRGB(0, 190, 240),
-        AccentStart = Color3.fromRGB(0, 210, 255),
-        AccentEnd = Color3.fromRGB(0, 160, 230),
-        Background = Color3.fromRGB(10, 10, 12),
-        Secondary = Color3.fromRGB(16, 16, 20),
-        CardHover = Color3.fromRGB(22, 22, 28),
-        Border = Color3.fromRGB(26, 26, 32),
-        BorderLit = Color3.fromRGB(36, 36, 46),
-        Text = Color3.fromRGB(240, 242, 248),
-        TextDark = Color3.fromRGB(120, 125, 140),
-        TextFade = Color3.fromRGB(65, 70, 80),
-    },
-    ["Midnight"] = {
-        Accent = Color3.fromRGB(150, 100, 250),
-        AccentStart = Color3.fromRGB(170, 120, 255),
-        AccentEnd = Color3.fromRGB(130, 80, 230),
-        Background = Color3.fromRGB(10, 10, 12),
-        Secondary = Color3.fromRGB(16, 15, 22),
-        CardHover = Color3.fromRGB(22, 20, 30),
-        Border = Color3.fromRGB(26, 25, 34),
-        BorderLit = Color3.fromRGB(38, 36, 48),
-        Text = Color3.fromRGB(245, 245, 250),
-        TextDark = Color3.fromRGB(125, 125, 140),
-        TextFade = Color3.fromRGB(70, 70, 85),
-    },
-    ["Emerald"] = {
-        Accent = Color3.fromRGB(35, 195, 130),
-        AccentStart = Color3.fromRGB(50, 215, 150),
-        AccentEnd = Color3.fromRGB(25, 170, 110),
-        Background = Color3.fromRGB(10, 10, 12),
-        Secondary = Color3.fromRGB(15, 20, 17),
-        CardHover = Color3.fromRGB(20, 28, 23),
-        Border = Color3.fromRGB(25, 32, 28),
-        BorderLit = Color3.fromRGB(36, 46, 40),
-        Text = Color3.fromRGB(242, 248, 244),
-        TextDark = Color3.fromRGB(120, 140, 130),
-        TextFade = Color3.fromRGB(65, 80, 72),
-    },
-    ["Ruby"] = {
-        Accent = Color3.fromRGB(235, 65, 90),
-        AccentStart = Color3.fromRGB(250, 85, 110),
-        AccentEnd = Color3.fromRGB(210, 45, 70),
-        Background = Color3.fromRGB(10, 10, 12),
-        Secondary = Color3.fromRGB(20, 15, 17),
-        CardHover = Color3.fromRGB(28, 20, 23),
-        Border = Color3.fromRGB(32, 25, 28),
-        BorderLit = Color3.fromRGB(46, 36, 40),
-        Text = Color3.fromRGB(248, 242, 244),
-        TextDark = Color3.fromRGB(140, 120, 125),
-        TextFade = Color3.fromRGB(80, 68, 72),
-    },
-    ["Monochrome"] = {
-        Accent = Color3.fromRGB(220, 220, 230),
-        AccentStart = Color3.fromRGB(240, 240, 250),
-        AccentEnd = Color3.fromRGB(190, 190, 205),
-        Background = Color3.fromRGB(10, 10, 12),
-        Secondary = Color3.fromRGB(16, 16, 19),
-        CardHover = Color3.fromRGB(22, 22, 26),
-        Border = Color3.fromRGB(26, 26, 30),
-        BorderLit = Color3.fromRGB(36, 36, 42),
-        Text = Color3.fromRGB(245, 245, 250),
-        TextDark = Color3.fromRGB(125, 125, 135),
-        TextFade = Color3.fromRGB(65, 65, 75),
-    }
-}
-
-local CurrentThemeName = "Inertia Matte"
 local c = {
-    Background = THEMES[CurrentThemeName].Background,
-    Secondary = THEMES[CurrentThemeName].Secondary,
-    CardHover = THEMES[CurrentThemeName].CardHover,
-    Border = THEMES[CurrentThemeName].Border,
-    BorderLit = THEMES[CurrentThemeName].BorderLit,
-    Text = THEMES[CurrentThemeName].Text,
-    TextDark = THEMES[CurrentThemeName].TextDark,
-    TextFade = THEMES[CurrentThemeName].TextFade,
-    Accent = THEMES[CurrentThemeName].Accent,
-    AccentStart = THEMES[CurrentThemeName].AccentStart,
-    AccentEnd = THEMES[CurrentThemeName].AccentEnd,
+    Background = Color3.fromRGB(10, 10, 12),
+    Secondary = Color3.fromRGB(16, 16, 20),
+    CardHover = Color3.fromRGB(22, 22, 28),
+    Border = Color3.fromRGB(26, 26, 32),
+    BorderLit = Color3.fromRGB(36, 36, 46),
+    Text = Color3.fromRGB(240, 242, 248),
+    TextDark = Color3.fromRGB(160, 165, 178),
+    TextFade = Color3.fromRGB(95, 100, 115),
+    Accent = Color3.fromRGB(0, 190, 240),
+    AccentStart = Color3.fromRGB(0, 210, 255),
+    AccentEnd = Color3.fromRGB(0, 160, 230),
     Toggle = {
-        Enabled = THEMES[CurrentThemeName].Accent,
+        Enabled = Color3.fromRGB(0, 190, 240),
         Disabled = Color3.fromRGB(22, 22, 28),
         Circle = Color3.fromRGB(245, 247, 252),
         CircleOff = Color3.fromRGB(80, 85, 98)
     },
     Notification = {
         Background = Color3.fromRGB(10, 10, 12),
-        Border = Color3.fromRGB(26, 26, 32),
-        Timer = THEMES[CurrentThemeName].Accent
+        Border = Color3.fromRGB(26, 26, 32)
     },
     Status = {
         Success = Color3.fromRGB(45, 205, 115),
         Warning = Color3.fromRGB(245, 170, 45),
         Error = Color3.fromRGB(245, 70, 70),
-        Info = THEMES[CurrentThemeName].Accent
+        Info = Color3.fromRGB(0, 190, 240)
     }
 }
 
@@ -2268,7 +2198,7 @@ local s = {
     Dropdown = {Height = 36, OptionHeight = 28},
     Tab = {Width = 148, Height = 32},
     ColorPicker = {Width = 190, Height = 170},
-    Notification = {Width = 240, Height = 68},
+    Notification = {Width = 240, Height = 56},
     TextBox = {Height = 36, InputWidth = 150}
 }
 
@@ -2289,7 +2219,6 @@ local animationspeed = {
 
 local Library = {
     Icons = LUCIDE,
-    Themes = THEMES,
     ActivePicker = nil,
     _activeDropdowns = {},
     _elements = {}
@@ -2392,6 +2321,18 @@ local function IsMobileDevice()
         end
     end
     return false
+end
+
+local function CloseAllPopups()
+    if Library.ActivePicker then
+        Library.ActivePicker()
+        Library.ActivePicker = nil
+    end
+    for _, dd in ipairs(Library._activeDropdowns) do
+        if dd and dd.Parent and dd.Visible then
+            dd.Visible = false
+        end
+    end
 end
 
 local function EnsureTooltip(screenGui)
@@ -2559,7 +2500,7 @@ local function GetAvailableConfigs()
             if isfolder(folder) then
                 local files = listfiles(folder)
                 for _, file in ipairs(files) do
-                    local name = file:match(folder .. "/(.+)%.json$") or file:match(folder .. "\\(.+)%.json$")
+                    local name = file:match(folder .. "/(.+)%.json$") or file:match(folder .. "\(.+)%.json$")
                     if name and not table.find(configs, name) then
                         table.insert(configs, name)
                     end
@@ -2612,26 +2553,16 @@ function Library:Notify(config)
 
     local notification = CreateInstance("Frame", {
         Name = "Notification",
-        BackgroundColor3 = c.Notification.Background,
-        BackgroundTransparency = 0.05,
+        BackgroundColor3 = Color3.fromRGB(10, 10, 12),
+        BackgroundTransparency = 0,
         Position = UDim2.new(1, 40, 0, 0),
-        Size = UDim2.new(1, 0, 0, 60),
+        Size = UDim2.new(1, 0, 0, 56),
         ClipsDescendants = true,
         ZIndex = 9001,
         Parent = container
     })
     CreateCorner(notification, 6)
     CreateStroke(notification, c.Border, 0, 1)
-
-    CreateInstance("Frame", {
-        Name = "AccentStrip",
-        BackgroundColor3 = typeColor,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(0, 3, 1, 0),
-        ZIndex = 9002,
-        Parent = notification
-    })
 
     CreateInstance("ImageLabel", {
         Name = "Icon",
@@ -2653,43 +2584,32 @@ function Library:Notify(config)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 38, 0, 10),
         TextSize = textsize.Normal,
-        Size = UDim2.new(1, -48, 0, 18),
+        Size = UDim2.new(1, -48, 0, 16),
         ZIndex = 9002,
         Parent = notification
     })
 
     CreateInstance("TextLabel", {
         Name = "Description",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.TextDark,
         Text = description,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextTruncate = Enum.TextTruncate.AtEnd,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 38, 0, 30),
+        Position = UDim2.new(0, 38, 0, 28),
         TextSize = textsize.Small,
-        Size = UDim2.new(1, -48, 0, 18),
+        Size = UDim2.new(1, -48, 0, 16),
         ZIndex = 9002,
         Parent = notification
     })
 
-    local timerBar = CreateInstance("Frame", {
-        Name = "Timer",
-        BackgroundColor3 = typeColor,
-        Position = UDim2.new(0, 3, 1, -2),
-        Size = UDim2.new(1, -3, 0, 2),
-        BorderSizePixel = 0,
-        ZIndex = 9002,
-        Parent = notification
-    })
-
-    CreateTween(notification, {Position = UDim2.new(0, 0, 0, 0)}, 0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-    CreateTween(timerBar, {Size = UDim2.new(0, 0, 0, 2)}, duration, Enum.EasingStyle.Linear)
+    CreateTween(notification, {Position = UDim2.new(0, 0, 0, 0)}, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
     task.delay(duration, function()
         if notification and notification.Parent then
-            CreateTween(notification, {Position = UDim2.new(1, 40, 0, 0)}, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-            task.wait(0.23)
+            CreateTween(notification, {Position = UDim2.new(1, 40, 0, 0)}, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+            task.wait(0.22)
             if notification and notification.Parent then
                 notification:Destroy()
             end
@@ -2715,7 +2635,7 @@ function Library:SetWatermark(config)
     WatermarkFrame = CreateInstance("Frame", {
         Name = "InertiaWatermark",
         BackgroundColor3 = c.Background,
-        BackgroundTransparency = 0.15,
+        BackgroundTransparency = 0,
         Position = UDim2.new(1, -200, 0, 16),
         Size = UDim2.new(0, 0, 0, 26),
         AutomaticSize = Enum.AutomaticSize.X,
@@ -2749,7 +2669,7 @@ function Library:SetWatermark(config)
 
     WatermarkLabel = CreateInstance("TextLabel", {
         Name = "Label",
-        Font = Enum.Font.GothamMedium,
+        Font = Enum.Font.GothamBold,
         TextColor3 = c.Text,
         Text = title,
         TextSize = textsize.Small,
@@ -2839,7 +2759,7 @@ function Library:Prompt(config)
 
     CreateInstance("TextLabel", {
         Name = "Desc",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.TextDark,
         Text = description,
         TextSize = textsize.Small,
@@ -2890,7 +2810,7 @@ function Library:Prompt(config)
         Parent = btnContainer
     })
     CreateCorner(confirmBtn, 5)
-    local confirmStroke = CreateStroke(confirmBtn, c.Accent, 0, 1)
+    CreateStroke(confirmBtn, c.BorderLit, 0, 1)
 
     cancelBtn.MouseButton1Click:Connect(function()
         overlay:Destroy()
@@ -2917,7 +2837,7 @@ function Library.new(title, configFolder)
     self._minSize = Vector2.new(s.Minv0rtexd.Width, s.Minv0rtexd.Height)
     self._maxSize = Vector2.new(s.Maxv0rtexd.Width, s.Maxv0rtexd.Height)
     self._mobileToggle = nil
-    self._mobileToggleEnabled = false
+    self._mobileToggleEnabled = true
     self._uiScaleObject = nil
     self._manualScale = 1
     self._settingsCreated = false
@@ -2942,33 +2862,6 @@ end
 function Library:SetAccent(color)
     c.Accent = color
     c.Toggle.Enabled = color
-    c.Notification.Timer = color
-end
-
-function Library:SetTheme(themeName)
-    local theme = THEMES[themeName]
-    if not theme then return end
-    CurrentThemeName = themeName
-    c.Accent = theme.Accent
-    c.AccentStart = theme.AccentStart
-    c.AccentEnd = theme.AccentEnd
-    c.Background = theme.Background
-    c.Secondary = theme.Secondary
-    c.CardHover = theme.CardHover
-    c.Border = theme.Border
-    c.BorderLit = theme.BorderLit
-    c.Text = theme.Text
-    c.TextDark = theme.TextDark
-    c.TextFade = theme.TextFade
-    c.Toggle.Enabled = theme.Accent
-    c.Notification.Timer = theme.Accent
-
-    if self.container then
-        CreateTween(self.container, {BackgroundColor3 = c.Background}, animationspeed.Normal)
-    end
-    if self.containerStroke then
-        CreateTween(self.containerStroke, {Color = c.Border}, animationspeed.Normal)
-    end
 end
 
 function Library:_SetupKeybindListener()
@@ -3006,6 +2899,7 @@ function Library:_AnimateContainerClose(onDone)
         if onDone then onDone() end
         return
     end
+    CloseAllPopups()
     local tw = CreateTween(self.container, { Position = UDim2.new(0.5, 0, 0.5, 12) }, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
     if tw then
         tw.Completed:Connect(function()
@@ -3033,6 +2927,9 @@ function Library:SetVisible(visible, animate)
         end
     else
         self.container.Visible = visible
+        if not visible then
+            CloseAllPopups()
+        end
     end
     if self._mobileToggle then
         self._mobileToggle.Visible = (not visible) and self._mobileToggleEnabled
@@ -3058,8 +2955,8 @@ function Library:SetPlayerFooterVisible(visible)
         self._playerFooterDivider.Visible = visible
     end
     if self.sectionsContainer then
-        local footerH = visible and 58 or 0
-        self.sectionsContainer.Size = UDim2.new(0, 175, 1, -(42 + footerH))
+        local footerH = visible and 54 or 0
+        self.sectionsContainer.Size = UDim2.new(1, 0, 1, -(38 + footerH))
     end
 end
 
@@ -3255,8 +3152,8 @@ function Library:_SetupMobileSupport()
     local mobileButton = CreateInstance("ImageButton", {
         Name = "InertiaMobileToggle",
         BackgroundColor3 = c.Secondary,
-        Position = UDim2.new(0, 20, 0, 100),
-        Size = UDim2.new(0, 40, 0, 40),
+        Position = UDim2.new(0, 20, 0, 120),
+        Size = UDim2.new(0, 38, 0, 38),
         Visible = false,
         ZIndex = 10000,
         Parent = mobileGui
@@ -3271,7 +3168,8 @@ function Library:_SetupMobileSupport()
         Image = inertiaIcon,
         Position = UDim2.new(0.5, 0, 0.5, 0),
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Size = UDim2.new(0, 24, 0, 24),
+        Size = UDim2.new(0, 22, 0, 22),
+        ZIndex = 10001,
         Parent = mobileButton
     })
 
@@ -3332,7 +3230,7 @@ function Library:_CreateMainv0rtexd()
     self.topBar = CreateInstance("Frame", {
         Name = "TopBar",
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 48),
+        Size = UDim2.new(1, 0, 0, 46),
         ZIndex = 12,
         Parent = self.container
     })
@@ -3345,7 +3243,7 @@ function Library:_CreateMainv0rtexd()
         ImageColor3 = c.Accent,
         AnchorPoint = Vector2.new(0, 0.5),
         Position = UDim2.new(0, 14, 0.5, 0),
-        Size = UDim2.new(0, 24, 0, 24),
+        Size = UDim2.new(0, 22, 0, 22),
         ScaleType = Enum.ScaleType.Fit,
         ZIndex = 13,
         Parent = self.topBar
@@ -3354,7 +3252,7 @@ function Library:_CreateMainv0rtexd()
     local titleRow = CreateInstance("Frame", {
         Name = "TitleRow",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 46, 0, 14),
+        Position = UDim2.new(0, 44, 0, 13),
         Size = UDim2.new(1, -260, 0, 20),
         ClipsDescendants = true,
         ZIndex = 13,
@@ -3379,7 +3277,7 @@ function Library:_CreateMainv0rtexd()
 
     self.gameLabel = CreateInstance("TextLabel", {
         Name = "GameName",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.TextDark,
         Text = "",
         BackgroundTransparency = 1,
@@ -3431,7 +3329,7 @@ function Library:_CreateMainv0rtexd()
 
     self._keyTimeLabel = CreateInstance("TextLabel", {
         Name = "KeyTimeLabel",
-        Font = Enum.Font.GothamMedium,
+        Font = Enum.Font.GothamBold,
         TextColor3 = c.TextDark,
         Text = "",
         BackgroundTransparency = 1,
@@ -3448,7 +3346,7 @@ function Library:_CreateMainv0rtexd()
         Name = "HeaderDivider",
         BackgroundColor3 = c.Border,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 0, 48),
+        Position = UDim2.new(0, 0, 0, 46),
         Size = UDim2.new(1, 0, 0, 1),
         ZIndex = 11,
         Parent = self.container
@@ -3462,13 +3360,13 @@ end
 function Library:_Createv0rtexdControls()
     local minimizeBtn = CreateInstance("ImageButton", {
         Name = "Minimize",
-        ImageColor3 = c.TextDark,
+        ImageColor3 = Color3.fromRGB(180, 185, 200),
         Image = LUCIDE.minus,
         BackgroundTransparency = 1,
         AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -38, 0.5, 0),
-        Size = UDim2.new(0, 16, 0, 16),
-        ZIndex = 25,
+        Position = UDim2.new(1, -40, 0.5, 0),
+        Size = UDim2.new(0, 22, 0, 22),
+        ZIndex = 50,
         Parent = self.topBar
     })
 
@@ -3476,21 +3374,21 @@ function Library:_Createv0rtexdControls()
         self:_ToggleMinimize()
     end)
     minimizeBtn.MouseEnter:Connect(function()
-        CreateTween(minimizeBtn, {ImageColor3 = c.Text}, animationspeed.Fast)
+        CreateTween(minimizeBtn, {ImageColor3 = Color3.fromRGB(255, 255, 255)}, animationspeed.Fast)
     end)
     minimizeBtn.MouseLeave:Connect(function()
-        CreateTween(minimizeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast)
+        CreateTween(minimizeBtn, {ImageColor3 = Color3.fromRGB(180, 185, 200)}, animationspeed.Fast)
     end)
 
     local closeBtn = CreateInstance("ImageButton", {
         Name = "Close",
-        ImageColor3 = c.TextDark,
+        ImageColor3 = Color3.fromRGB(180, 185, 200),
         Image = LUCIDE.x,
         BackgroundTransparency = 1,
         AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -14, 0.5, 0),
-        Size = UDim2.new(0, 16, 0, 16),
-        ZIndex = 25,
+        Position = UDim2.new(1, -12, 0.5, 0),
+        Size = UDim2.new(0, 22, 0, 22),
+        ZIndex = 50,
         Parent = self.topBar
     })
 
@@ -3501,7 +3399,7 @@ function Library:_Createv0rtexdControls()
         CreateTween(closeBtn, {ImageColor3 = c.Status.Error}, animationspeed.Fast)
     end)
     closeBtn.MouseLeave:Connect(function()
-        CreateTween(closeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast)
+        CreateTween(closeBtn, {ImageColor3 = Color3.fromRGB(180, 185, 200)}, animationspeed.Fast)
     end)
 
     local resizeBtn = CreateInstance("ImageButton", {
@@ -3525,8 +3423,8 @@ function Library:_CreateContentArea()
     self.mainContent = CreateInstance("Frame", {
         Name = "MainContent",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 49),
-        Size = UDim2.new(1, 0, 1, -49),
+        Position = UDim2.new(0, 0, 0, 47),
+        Size = UDim2.new(1, 0, 1, -47),
         ClipsDescendants = true,
         ZIndex = 11,
         Parent = self.container
@@ -3571,7 +3469,7 @@ function Library:_CreateContentArea()
 
     local searchBox = CreateInstance("TextBox", {
         Name = "SearchInput",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         PlaceholderText = "Search...",
         PlaceholderColor3 = c.TextFade,
@@ -3603,11 +3501,10 @@ function Library:_CreateContentArea()
 
     self.sectionsContainer = CreateInstance("ScrollingFrame", {
         Name = "SectionsContainer",
-        ScrollBarThickness = 2,
-        ScrollBarImageColor3 = c.Border,
+        ScrollBarThickness = 0,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 0, 38),
-        Size = UDim2.new(0, sidebarW, 1, -(38 + footerH)),
+        Size = UDim2.new(1, 0, 1, -(38 + footerH)),
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -3621,8 +3518,8 @@ function Library:_CreateContentArea()
         Name = "PlayerFooterDivider",
         BackgroundColor3 = c.Border,
         BorderSizePixel = 0,
-        Position = UDim2.new(0, 8, 1, -footerH),
-        Size = UDim2.new(0, sidebarW - 16, 0, 1),
+        Position = UDim2.new(0, 0, 1, -footerH),
+        Size = UDim2.new(1, 0, 0, 1),
         Visible = self._showPlayerFooter,
         ZIndex = 13,
         Parent = sidebarFrame
@@ -3632,7 +3529,7 @@ function Library:_CreateContentArea()
         Name = "PlayerFooter",
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 0, 1, -footerH),
-        Size = UDim2.new(0, sidebarW, 0, footerH),
+        Size = UDim2.new(1, 0, 0, footerH),
         Visible = self._showPlayerFooter,
         ZIndex = 13,
         Parent = sidebarFrame
@@ -3667,7 +3564,7 @@ function Library:_CreateContentArea()
 
     local userName = CreateInstance("TextLabel", {
         Name = "Username",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.TextDark,
         Text = "@" .. (plr.LocalPlayer and plr.LocalPlayer.Name or "User"),
         BackgroundTransparency = 1,
@@ -3708,6 +3605,7 @@ function Library:_CreateContentArea()
         Name = "ContentContainer",
         ScrollBarThickness = 2,
         ScrollBarImageColor3 = c.Border,
+        ScrollBarImageTransparency = 0.6,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, sidebarW + 1, 0, 0),
         Size = UDim2.new(1, -(sidebarW + 1), 1, 0),
@@ -3725,18 +3623,25 @@ function Library:_FilterTabsAndElements(query)
     for _, section in ipairs(self.sections) do
         local anyVisibleTab = false
         for _, tab in ipairs(section.tabs) do
-            local tabMatches = (query == "") or (string.find(string.lower(tab.name), query, 1, true) ~= nil)
-            tab.button.Visible = tabMatches
-            if tabMatches then
-                anyVisibleTab = true
-            end
+            local tabNameMatches = (query == "") or (string.find(string.lower(tab.name), query, 1, true) ~= nil)
+            local anyElemMatches = false
+
             if tab.elements then
                 for _, element in ipairs(tab.elements) do
                     if element.frame and element.name then
                         local elemMatches = (query == "") or (string.find(string.lower(element.name), query, 1, true) ~= nil)
                         element.frame.Visible = elemMatches
+                        if elemMatches then
+                            anyElemMatches = true
+                        end
                     end
                 end
+            end
+
+            local tabVisible = tabNameMatches or anyElemMatches
+            tab.button.Visible = tabVisible
+            if tabVisible then
+                anyVisibleTab = true
             end
         end
         if section.frame then
@@ -3803,16 +3708,17 @@ end
 
 function Library:_ToggleMinimize()
     self.minimized = not self.minimized
+    CloseAllPopups()
     if self.minimized then
         CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 0, 0)}, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
-        CreateTween(self.container, {Size = UDim2.new(0, self.container.Size.X.Offset, 0, 48)}, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+        CreateTween(self.container, {Size = UDim2.new(0, self.container.Size.X.Offset, 0, 46)}, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
         if self.resizeBtn then
             self.resizeBtn.Visible = false
         end
     else
         CreateTween(self.container, {Size = UDim2.new(0, self.container.Size.X.Offset, 0, self._originalHeight)}, 0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
         task.delay(0.06, function()
-            CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 1, -49)}, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 1, -47)}, 0.16, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
         end)
         if self.resizeBtn then
             self.resizeBtn.Visible = true
@@ -3845,20 +3751,6 @@ function Library:_CreateDefaultSettings()
         end
     })
 
-    tab:CreateSection("Theme & Accent")
-    local themeNames = {}
-    for name, _ in pairs(THEMES) do
-        table.insert(themeNames, name)
-    end
-    tab:CreateDropdown({
-        Name = "Select Theme",
-        Options = themeNames,
-        Default = CurrentThemeName,
-        Callback = function(selected)
-            self:SetTheme(selected)
-        end
-    })
-
     tab:CreateSection("Keybinds")
     self:_CreateToggleKeySetting(tab)
 
@@ -3879,7 +3771,7 @@ function Library:_CreateToggleKeySetting(tab)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = "Menu Toggle Key",
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4097,7 +3989,7 @@ function Library:CreateSection(name)
         Parent = headerContainer
     })
 
-    local arrow = CreateInstance("ImageButton", {
+    local arrow = CreateInstance("ImageLabel", {
         Name = "Arrow",
         Image = LUCIDE.chevron_down,
         ImageColor3 = c.TextFade,
@@ -4105,6 +3997,15 @@ function Library:CreateSection(name)
         Position = UDim2.new(1, -16, 0.5, -6),
         Size = UDim2.new(0, 12, 0, 12),
         ZIndex = 16,
+        Parent = headerContainer
+    })
+
+    local headerClick = CreateInstance("TextButton", {
+        Name = "HeaderClick",
+        Text = "",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 17,
         Parent = headerContainer
     })
 
@@ -4125,7 +4026,14 @@ function Library:CreateSection(name)
         tabsContainer.Visible = section.expanded
     end
 
-    arrow.MouseButton1Click:Connect(ToggleSection)
+    headerClick.MouseButton1Click:Connect(ToggleSection)
+
+    headerClick.MouseEnter:Connect(function()
+        CreateTween(arrow, {ImageColor3 = c.TextDark}, animationspeed.Fast)
+    end)
+    headerClick.MouseLeave:Connect(function()
+        CreateTween(arrow, {ImageColor3 = c.TextFade}, animationspeed.Fast)
+    end)
 
     section.frame = sectionFrame
     section.tabsContainer = tabsContainer
@@ -4184,7 +4092,7 @@ function Library._CreateTab(section, name, icon)
 
     local tabText = CreateInstance("TextLabel", {
         Name = "TabText",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.TextDark,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4300,6 +4208,8 @@ function Library._CreateTab(section, name, icon)
 end
 
 function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, activeIndicator)
+    CloseAllPopups()
+
     if lib.currentTab then
         lib.currentTab.content.Visible = false
         CreateTween(lib.currentTab.button, {BackgroundTransparency = 1}, animationspeed.Fast)
@@ -4373,7 +4283,7 @@ function Library._CreateParagraph(tab, config)
 
     local contentLabel = CreateInstance("TextLabel", {
         Name = "Content",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.TextDark,
         Text = content,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4417,7 +4327,7 @@ function Library._CreateButton(tab, config)
 
     local nameLabel = CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4581,7 +4491,7 @@ function Library._CreateToggle(tab, config)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4768,7 +4678,7 @@ function Library._CreateSlider(tab, config)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4964,7 +4874,7 @@ function Library._CreateDropdown(tab, config)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -4991,7 +4901,7 @@ function Library._CreateDropdown(tab, config)
 
     local selectedLabel = CreateInstance("TextLabel", {
         Name = "SelectedLabel",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = multiSelect and (#selected > 0 and table.concat(selected, ", ") or "None") or tostring(selected),
         TextTruncate = Enum.TextTruncate.AtEnd,
@@ -5064,7 +4974,7 @@ function Library._CreateDropdown(tab, config)
         local isSelected = multiSelect and table.find(selected, option) ~= nil or (selected == option)
         local optBtn = CreateInstance("TextButton", {
             Name = option,
-            Font = Enum.Font.Gotham,
+            Font = Enum.Font.GothamMedium,
             TextColor3 = isSelected and c.Accent or c.Text,
             Text = option,
             BackgroundColor3 = c.Background,
@@ -5122,7 +5032,7 @@ function Library._CreateDropdown(tab, config)
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
         ZIndex = 18,
-        Parent = selectedDisplay
+        Parent = frame
     })
 
     toggleBtn.MouseButton1Click:Connect(function()
@@ -5152,8 +5062,8 @@ function Library._CreateDropdown(tab, config)
             local mPos = ui:GetMouseLocation()
             local cPos = optionsContainer.AbsolutePosition
             local cSize = optionsContainer.AbsoluteSize
-            local dPos = selectedDisplay.AbsolutePosition
-            local dSize = selectedDisplay.AbsoluteSize
+            local dPos = frame.AbsolutePosition
+            local dSize = frame.AbsoluteSize
 
             local inContainer = mPos.X >= cPos.X and mPos.X <= cPos.X + cSize.X and mPos.Y >= cPos.Y and mPos.Y <= cPos.Y + cSize.Y
             local inDisplay = mPos.X >= dPos.X and mPos.X <= dPos.X + dSize.X and mPos.Y >= dPos.Y and mPos.Y <= dPos.Y + dSize.Y
@@ -5236,7 +5146,7 @@ function Library._CreateKeybind(tab, config, lib)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -5356,7 +5266,7 @@ function Library._CreateColorPicker(tab, config)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -5385,7 +5295,7 @@ function Library._CreateColorPicker(tab, config)
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
         ZIndex = 17,
-        Parent = colorPreview
+        Parent = frame
     })
 
     local pickerContainer = CreateInstance("Frame", {
@@ -5582,6 +5492,32 @@ function Library._CreateColorPicker(tab, config)
         end
     end)
 
+    local clickOutsideConn = ui.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and expanded then
+            task.wait(0.05)
+            if not expanded then return end
+            local mPos = ui:GetMouseLocation()
+            local cPos = pickerContainer.AbsolutePosition
+            local cSize = pickerContainer.AbsoluteSize
+            local dPos = frame.AbsolutePosition
+            local dSize = frame.AbsoluteSize
+
+            local inContainer = mPos.X >= cPos.X and mPos.X <= cPos.X + cSize.X and mPos.Y >= cPos.Y and mPos.Y <= cPos.Y + cSize.Y
+            local inDisplay = mPos.X >= dPos.X and mPos.X <= dPos.X + dSize.X and mPos.Y >= dPos.Y and mPos.Y <= dPos.Y + dSize.Y
+
+            if not inContainer and not inDisplay then
+                ClosePicker()
+            end
+        end
+    end)
+    table.insert(Connections, clickOutsideConn)
+
+    frame.Destroying:Connect(function()
+        if pickerContainer then
+            pickerContainer:Destroy()
+        end
+    end)
+
     if tooltip then
         AttachTooltip(previewBtn, tooltip, tab._library.screenGui)
     end
@@ -5633,7 +5569,7 @@ function Library._CreateTextBox(tab, config)
 
     CreateInstance("TextLabel", {
         Name = "Name",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -5660,7 +5596,7 @@ function Library._CreateTextBox(tab, config)
 
     local textBox = CreateInstance("TextBox", {
         Name = "Input",
-        Font = Enum.Font.Gotham,
+        Font = Enum.Font.GothamMedium,
         TextColor3 = c.Text,
         PlaceholderText = placeholder,
         PlaceholderColor3 = c.TextFade,
