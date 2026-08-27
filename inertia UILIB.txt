@@ -2621,7 +2621,7 @@ end
 function Library:SetWatermark(config)
     config = config or {}
     local visible = (config.Visible ~= false)
-    local title = config.Title or "Inertia v2.0"
+    local title = config.Title or "Inertia"
     local showFps = (config.Fps ~= false)
     local showPing = (config.Ping ~= false)
 
@@ -3263,7 +3263,7 @@ function Library:_CreateMainv0rtexd()
     self.titleLabel = CreateInstance("TextLabel", {
         Name = "Title",
         Font = Enum.Font.GothamBold,
-        TextColor3 = c.Text,
+        TextColor3 = Color3.fromRGB(240, 245, 255),
         Text = self.title,
         BackgroundTransparency = 1,
         TextXAlignment = Enum.TextXAlignment.Left,
@@ -3274,6 +3274,25 @@ function Library:_CreateMainv0rtexd()
         ZIndex = 14,
         Parent = titleRow
     })
+
+    local titleGrad = CreateInstance("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(240, 245, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 210, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(240, 245, 255))
+        }),
+        Offset = Vector2.new(-1, 0),
+        Parent = self.titleLabel
+    })
+
+    task.spawn(function()
+        local t = 0
+        while rs.RenderStepped:Wait() do
+            if not self.container or not self.titleLabel or not titleGrad.Parent then break end
+            t = (t + 0.02) % (math.pi * 2)
+            titleGrad.Offset = Vector2.new(math.sin(t) * 0.85, 0)
+        end
+    end)
 
     self.gameLabel = CreateInstance("TextLabel", {
         Name = "GameName",
@@ -4853,11 +4872,16 @@ function Library._CreateDropdown(tab, config)
     local tooltip = config.Tooltip
     local selected = multiSelect and {} or default
     local expanded = false
+    local optionItems = {}
 
-    if multiSelect and type(default) == "table" then
-        selected = default
-    elseif multiSelect and type(default) == "string" then
-        selected = {default}
+    if multiSelect then
+        if type(default) == "table" then
+            for _, v in ipairs(default) do
+                table.insert(selected, v)
+            end
+        elseif type(default) == "string" then
+            table.insert(selected, default)
+        end
     end
 
     local frame = CreateInstance("Frame", {
@@ -4897,7 +4921,7 @@ function Library._CreateDropdown(tab, config)
         Parent = frame
     })
     CreateCorner(selectedDisplay, 4)
-    CreateStroke(selectedDisplay, c.Border, 0, 1)
+    local displayStroke = CreateStroke(selectedDisplay, c.Border, 0, 1)
 
     local selectedLabel = CreateInstance("TextLabel", {
         Name = "SelectedLabel",
@@ -4971,28 +4995,52 @@ function Library._CreateDropdown(tab, config)
     end
 
     local function CreateOptionButton(option)
-        local isSelected = multiSelect and table.find(selected, option) ~= nil or (selected == option)
+        local isSelected = multiSelect and (table.find(selected, option) ~= nil) or (selected == option)
+        
         local optBtn = CreateInstance("TextButton", {
             Name = option,
-            Font = Enum.Font.GothamMedium,
-            TextColor3 = isSelected and c.Accent or c.Text,
-            Text = option,
+            Text = "",
             BackgroundColor3 = c.Background,
-            BackgroundTransparency = isSelected and 0.3 or 1,
+            BackgroundTransparency = isSelected and 0.2 or 1,
             BorderSizePixel = 0,
-            TextSize = textsize.Small,
             Size = UDim2.new(1, 0, 0, s.Dropdown.OptionHeight),
             ZIndex = 502,
             Parent = optionsScroll
         })
 
+        local checkDot = CreateInstance("Frame", {
+            Name = "CheckDot",
+            BackgroundColor3 = c.Accent,
+            Size = UDim2.new(0, 4, 0, 4),
+            AnchorPoint = Vector2.new(0, 0.5),
+            Position = UDim2.new(0, 8, 0.5, 0),
+            Visible = isSelected,
+            ZIndex = 503,
+            Parent = optBtn
+        })
+        CreateCorner(checkDot, 100)
+
+        local optText = CreateInstance("TextLabel", {
+            Name = "Label",
+            Font = Enum.Font.GothamMedium,
+            TextColor3 = isSelected and c.Accent or c.Text,
+            Text = option,
+            TextXAlignment = Enum.TextXAlignment.Left,
+            BackgroundTransparency = 1,
+            TextSize = textsize.Small,
+            Position = UDim2.new(0, 18, 0, 0),
+            Size = UDim2.new(1, -22, 1, 0),
+            ZIndex = 503,
+            Parent = optBtn
+        })
+
         optBtn.MouseEnter:Connect(function()
-            CreateTween(optBtn, {BackgroundTransparency = 0.5}, animationspeed.Fast)
+            CreateTween(optBtn, {BackgroundTransparency = 0.4}, animationspeed.Fast)
         end)
 
         optBtn.MouseLeave:Connect(function()
-            local curSelected = multiSelect and table.find(selected, option) ~= nil or (selected == option)
-            CreateTween(optBtn, {BackgroundTransparency = curSelected and 0.3 or 1}, animationspeed.Fast)
+            local curSelected = multiSelect and (table.find(selected, option) ~= nil) or (selected == option)
+            CreateTween(optBtn, {BackgroundTransparency = curSelected and 0.2 or 1}, animationspeed.Fast)
         end)
 
         optBtn.MouseButton1Click:Connect(function()
@@ -5000,25 +5048,37 @@ function Library._CreateDropdown(tab, config)
                 local idx = table.find(selected, option)
                 if idx then
                     table.remove(selected, idx)
-                    optBtn.TextColor3 = c.Text
+                    optText.TextColor3 = c.Text
+                    checkDot.Visible = false
                     optBtn.BackgroundTransparency = 1
                 else
                     table.insert(selected, option)
-                    optBtn.TextColor3 = c.Accent
-                    optBtn.BackgroundTransparency = 0.3
+                    optText.TextColor3 = c.Accent
+                    checkDot.Visible = true
+                    optBtn.BackgroundTransparency = 0.2
                 end
                 UpdateSelectedText()
                 callback(selected)
             else
                 selected = option
+                for _, item in ipairs(optionItems) do
+                    if item.btn and item.label and item.dot then
+                        local active = (item.name == option)
+                        item.label.TextColor3 = active and c.Accent or c.Text
+                        item.dot.Visible = active
+                        item.btn.BackgroundTransparency = active and 0.2 or 1
+                    end
+                end
                 UpdateSelectedText()
                 callback(selected)
                 expanded = false
                 optionsContainer.Visible = false
                 CreateTween(arrow, {Rotation = 0}, animationspeed.Normal)
+                CreateTween(displayStroke, {Color = c.Border}, animationspeed.Fast)
             end
         end)
 
+        table.insert(optionItems, {name = option, btn = optBtn, label = optText, dot = checkDot})
         return optBtn
     end
 
@@ -5032,7 +5092,7 @@ function Library._CreateDropdown(tab, config)
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
         ZIndex = 18,
-        Parent = frame
+        Parent = selectedDisplay
     })
 
     toggleBtn.MouseButton1Click:Connect(function()
@@ -5047,9 +5107,11 @@ function Library._CreateDropdown(tab, config)
             PositionOptions()
             optionsContainer.Visible = true
             CreateTween(arrow, {Rotation = 180}, animationspeed.Normal)
+            CreateTween(displayStroke, {Color = c.BorderLit}, animationspeed.Fast)
         else
             optionsContainer.Visible = false
             CreateTween(arrow, {Rotation = 0}, animationspeed.Normal)
+            CreateTween(displayStroke, {Color = c.Border}, animationspeed.Fast)
         end
     end)
 
@@ -5062,8 +5124,8 @@ function Library._CreateDropdown(tab, config)
             local mPos = ui:GetMouseLocation()
             local cPos = optionsContainer.AbsolutePosition
             local cSize = optionsContainer.AbsoluteSize
-            local dPos = frame.AbsolutePosition
-            local dSize = frame.AbsoluteSize
+            local dPos = selectedDisplay.AbsolutePosition
+            local dSize = selectedDisplay.AbsoluteSize
 
             local inContainer = mPos.X >= cPos.X and mPos.X <= cPos.X + cSize.X and mPos.Y >= cPos.Y and mPos.Y <= cPos.Y + cSize.Y
             local inDisplay = mPos.X >= dPos.X and mPos.X <= dPos.X + dSize.X and mPos.Y >= dPos.Y and mPos.Y <= dPos.Y + dSize.Y
@@ -5072,6 +5134,7 @@ function Library._CreateDropdown(tab, config)
                 expanded = false
                 optionsContainer.Visible = false
                 CreateTween(arrow, {Rotation = 0}, animationspeed.Normal)
+                CreateTween(displayStroke, {Color = c.Border}, animationspeed.Fast)
             end
         end
     end)
@@ -5089,8 +5152,18 @@ function Library._CreateDropdown(tab, config)
 
     local methods = {
         SetValue = function(_, value)
-            selected = value
+            if multiSelect and type(value) == "table" then
+                selected = value
+            else
+                selected = value
+            end
             UpdateSelectedText()
+            for _, item in ipairs(optionItems) do
+                local isSel = multiSelect and (table.find(selected, item.name) ~= nil) or (selected == item.name)
+                item.label.TextColor3 = isSel and c.Accent or c.Text
+                item.dot.Visible = isSel
+                item.btn.BackgroundTransparency = isSel and 0.2 or 1
+            end
             callback(selected)
         end,
         GetValue = function()
@@ -5098,6 +5171,7 @@ function Library._CreateDropdown(tab, config)
         end,
         Refresh = function(_, newOptions)
             options = newOptions
+            optionItems = {}
             for _, child in ipairs(optionsScroll:GetChildren()) do
                 if child:IsA("TextButton") then
                     child:Destroy()
@@ -5288,14 +5362,15 @@ function Library._CreateColorPicker(tab, config)
         Parent = frame
     })
     CreateCorner(colorPreview, 4)
-    CreateStroke(colorPreview, c.BorderLit, 0, 1)
+    local previewStroke = CreateStroke(colorPreview, c.BorderLit, 0, 1)
 
     local previewBtn = CreateInstance("TextButton", {
+        Name = "PreviewBtn",
         Text = "",
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
         ZIndex = 17,
-        Parent = frame
+        Parent = colorPreview
     })
 
     local pickerContainer = CreateInstance("Frame", {
@@ -5499,13 +5574,13 @@ function Library._CreateColorPicker(tab, config)
             local mPos = ui:GetMouseLocation()
             local cPos = pickerContainer.AbsolutePosition
             local cSize = pickerContainer.AbsoluteSize
-            local dPos = frame.AbsolutePosition
-            local dSize = frame.AbsoluteSize
+            local pPos = colorPreview.AbsolutePosition
+            local pSize = colorPreview.AbsoluteSize
 
             local inContainer = mPos.X >= cPos.X and mPos.X <= cPos.X + cSize.X and mPos.Y >= cPos.Y and mPos.Y <= cPos.Y + cSize.Y
-            local inDisplay = mPos.X >= dPos.X and mPos.X <= dPos.X + dSize.X and mPos.Y >= dPos.Y and mPos.Y <= dPos.Y + dSize.Y
+            local inPreview = mPos.X >= pPos.X and mPos.X <= pPos.X + pSize.X and mPos.Y >= pPos.Y and mPos.Y <= pPos.Y + pSize.Y
 
-            if not inContainer and not inDisplay then
+            if not inContainer and not inPreview then
                 ClosePicker()
             end
         end
